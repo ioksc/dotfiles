@@ -1,0 +1,19 @@
+
+# for a list of all available themes. Run `bat --list-themes`
+--theme="TwoDark"
+
+# This is not supported on all, terminal emulators (like tmux, by default):
+--italic-text=always
+
+# Uncomment the following line to disable automatic paging:
+#--paging=never
+
+# disable text selection, unless you press shift.
+--pager="less --RAW-CONTROL-CHARS --quit-if-one-screen --mouse"
+
+# Syntax mappings: map a certain filename pattern to a language.
+--map-syntax "*.ino:C++"
+--map-syntax ".ignore:Git Ignore"
+
+--style changes
+# --style numbers,changes
