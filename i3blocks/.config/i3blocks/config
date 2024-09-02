@@ -1,0 +1,106 @@
+
+align=center
+separator=false
+color=#e6e6e6
+separator_block_width=15
+markup=pango
+
+[mediaplayer]
+command=playerctl metadata --format "{{ artist }} <span color=\"#1ae0f0\">|</span> {{ title }}"
+interval=5
+label=<span color="#1ae0f0">󱖏 </span>
+border=#1ae0f0
+border_top=2
+border_right=0
+border_bottom=0
+border_left=0
+
+[openpvn]
+command=ip -4 addr show tun0 2>/dev/null | awk '/inet / {split($2, a, "/"); print a[1]}' | { read -r ip; echo "VPN: ${ip:-OFF}"; }
+interval=15
+label=<span color="#8A2BE2"> </span>
+border=#8A2BE2
+border_top=2
+border_right=0
+border_bottom=0
+border_left=0
+
+[arch_update]
+command=checkupdates | wc -l
+interval=once
+label=<span color="#1793d1"> </span>
+border=#1793d1
+border_top=2
+border_right=0
+border_bottom=0
+border_left=0
+
+[keyboard]
+command=setxkbmap -query | awk '/layout/{layout=$2} /variant/{variant=$2} END{if (variant) print toupper(layout) " " variant; else print toupper(layout)}'
+interval=3
+label=<span color="#40e0d0">  </span>
+border=#40e0d0
+border_top=2
+border_right=0
+border_bottom=0
+border_left=0
+
+[root]
+command=df -h / | awk 'FNR==2 { gsub(/[A-Za-z]/, ""); printf "%i<span color=\"#f9a602\">GiB</span>\n", $4 }'
+interval=10
+label=<span color="#f9a602">  </span>
+border=#f9a602
+border_top=2
+border_right=0
+border_bottom=0
+border_left=0
+
+[cpu]
+command=mpstat 1 1 | awk '/all/ {print 100 - $12 "%"}'
+interval=5
+label=<span color="#cde040">  </span>
+border=#cde040
+border_top=2
+border_right=0
+border_bottom=0
+border_left=0
+
+[volume]
+command=wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print int($2*100)}'
+interval=2
+label=<span color="#ed3cfd">  </span>
+border=#ed3cfd
+border_top=2
+border_right=0
+border_bottom=0
+border_left=0
+
+[time_madrid]
+command=TZ="Europe/Madrid" date '+%H : %M %Z' | awk '{ printf "%s<span color=\"#9ef01a\">%s</span>%s<span color=\"#9ef01a\">%s</span>\n", $1, $2, $3, $4 }'
+interval=10
+label=<span color="#9ef01a"> </span>
+border=#9ef01a
+border_top=2
+border_right=0
+border_bottom=0
+border_left=0
+
+[time_est]
+command=TZ=":US/Eastern" date '+%H : %M %Z' | awk '{ printf "%s<span color=\"#3be06e\">%s</span>%s<span color=\"#3be06e\">%s</span>\n", $1, $2, $3, $4 }'
+interval=10
+label=<span color="#3be06e">󱑒 </span>
+border=#3be06e
+border_top=2
+border_right=0
+border_bottom=0
+border_left=0
+
+[date]
+command=date '+%Y %B %d %A' | awk '{ printf "%s<span color=\"#e0406b\"> %s / </span>%s <span color=\"#e0406b\">%s</span>\n", $1, $2, $3, $4 }'
+interval=3600
+label=<span color="#e0406b">󰸘 </span>
+border=#e0406b
+border_top=2
+border_right=0
+border_bottom=0
+border_left=0
