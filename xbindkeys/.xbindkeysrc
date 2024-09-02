@@ -1,0 +1,66 @@
+# This is the default ~/.xbindkeysrc file.  To customize your keys, create
+# ~/.xbindkeysrc in your home directory.  Add keys you want to have by default
+# in this file, and unbind the ones you don't want to use.
+
+# personal launch scripts(Service manager)
+"alacritty --class "service_mg_ioksc" -e ~/dotfiles/scripts/runas.sh"
+    m:0x40 + c:52
+    Mod4 + z
+
+# Flameshot (Screenshot)
+"flameshot gui"
+    m:0x0 + c:107
+    Print
+# launch personal note taking app
+"obsidian"
+    m:0x0 + c:179
+    XF86Tools
+
+# To lower the volume:
+"wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
+    m:0x0 + c:122
+    XF86AudioLowerVolume
+
+# To raise the volume, with a limit of 150%:
+"wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+"
+    m:0x0 + c:123
+    XF86AudioRaiseVolume
+
+# To mute/unmute the volume (toggle):
+"wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+    m:0x0 + c:121
+    XF86AudioMute
+
+# f5 (Stop)
+"playerctl stop"
+    m:0x0 + c:174
+    XF86AudioStop
+
+# f6 (Previous)
+"playerctl previous"
+    m:0x0 + c:173
+    XF86AudioPrev
+
+# f7 (Play/Pause)
+"playerctl play-pause"
+    m:0x0 + c:172
+    XF86AudioPlay
+
+# f8 (Next)
+"playerctl next"
+    m:0x0 + c:171
+    XF86AudioNext
+# f9
+"thunderbird"
+    m:0x0 + c:163
+    XF86Mail
+
+# f10
+"firefox"
+    m:0x0 + c:180
+    XF86HomePage
+
+# f11
+"qalculate-qt"
+    m:0x0 + c:148
+    XF86Calculator
