@@ -1,0 +1,57 @@
+# fastfetch - alias
+alias pfetch='fastfetch --config examples/8'
+alias fetch='fastfetch --config examples/13'
+
+# eza - fast alternative to the classic 'ls' command.
+alias ls='eza -al --icons --group-directories-first' 
+alias la='eza -a --icons --group-directories-first'  
+alias ll='eza -alh --icons --group-directories-first'
+
+# display xprop class
+alias xpropc='xprop | grep WM_CLASS' 
+
+# pacman remove locks
+alias unlockdb='sudo rm /var/lib/pacman/db.lck'
+
+# grub update   
+alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
+
+# fonts cache refresh
+alias update-fonts='fc-cache -f -v'
+
+# alias for fast vim for big files 
+# alias lvim='\vim -c "set nowrap|syntax off"'        
+
+# get error messages from journalctl
+alias jctl="journalctl -p 3 -xb"
+
+# termbin, for fast terminal sharing
+alias tb="nc termbin.com 9999"
+
+# Select the 10 most recently synchronized servers, updated within the last 30 hours
+alias mirror="sudo reflector -f 30 -l 30 --number 10 --verbose --save /etc/pacman.d/mirrorlist"
+
+# Select the 20 fastest mirrors from the last 50 synchronized servers, sorted by download speed
+alias mirrord="sudo reflector --latest 50 --number 20 --sort delay --save /etc/pacman.d/mirrorlist"
+
+# Select the 20 mirrors with the best score from the last 50 synchronized servers
+alias mirrors="sudo reflector --latest 50 --number 20 --sort score --save /etc/pacman.d/mirrorlist"
+
+# Select the 20 most recently updated mirrors from the last 50 synchronized servers
+alias mirrora="sudo reflector --latest 50 --number 20 --sort age --save /etc/pacman.d/mirrorlist"
+
+# git aliases
+alias gs="git status"
+alias ga="git add"
+alias gc="git commit -m"
+alias gp="git push"
+alias gpl="git pull"
+alias gst="git stash"
+alias gsp="git stash; git pull"
+alias gcheck="git checkout"
+alias gcredential="git config credential.helper store"
+alias glc='git log --graph --abbrev-commit --oneline --decorate'
+
+
+
+
