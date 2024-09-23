@@ -1,0 +1,18 @@
+configuration {
+  width: 100%;
+  drun-icon-theme: "pop";
+  show-icons: true;
+  sidebar-mode: true;
+  modi: "drun,run,window";
+  font: "Mononoki Nerd Font 11";
+  terminal: "alacritty";
+  display-drun: "";
+  display-run: "";
+  display-window: "";
+  drun-display-format: "{name}";
+  location: 0;
+  disable-history: false;
+  hide-scrollbar: true;
+  sidebar-mode: true;
+}
+@theme "/home/ioksc/.config/rofi/themes/theme.rasi"
