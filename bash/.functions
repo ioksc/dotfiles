@@ -1,0 +1,78 @@
+yy() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+	yazi "$@" --cwd-file="$tmp"
+	if cwd="$(cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+		builtin cd -- "$cwd"
+	fi
+	rm -f -- "$tmp"
+}
+
+ex() {
+    if [ $# -eq 0 ]; then
+        echo "Uso: ex <archivo1> [archivo2] ..."
+        return 1
+    fi
+
+    for file in "$@"; do
+        if [ ! -f "$file" ]; then
+            echo "'$file' - el archivo no existe"
+            continue
+        fi
+
+        case "${file,,}" in
+            *.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) tar xvf "$file" ;;
+            *.7z|*.cab|*.deb|*.dmg|*.iso|*.lzh|*.pkg|*.rpm|*.udf|*.xar) 7z x "$file" ;;
+            *.lzma) unlzma "$file" ;;
+            *.bz2) bunzip2 "$file" ;;
+            *.cbr|*.rar) unrar x -ad "$file" ;;
+            *.gz) gunzip "$file" ;;
+            *.z) uncompress "$file" ;;
+            *.xz) unxz "$file" ;;
+            *)
+                echo "ex: '$file' - método de archivo desconocido"
+                ;;
+        esac
+    done
+}
+
+# Copy with progress
+rcopy() {
+    # Verificar que se pasen exactamente dos argumentos
+    [[ "$#" -ne 2 ]] && { echo "Uso: rcopy <origen> <destino>"; return 1; }
+
+    # Verificar que el archivo de origen existe
+    [[ ! -e "$1" ]] && { echo "Error: El archivo de origen '$1' no existe."; return 1; }
+
+    # Usar rsync para copiar con progreso
+    rsync -WavP --human-readable "$1" "$2"
+}
+
+backup() {
+    # Verificar que se pasen al menos dos argumentos
+    [[ "$#" -lt 2 ]] && {
+        echo "Uso: backup <origen> <destino> [opciones]"
+        echo "Opciones:"
+        echo "  --dry-run    Muestra qué archivos se copiarían sin realizar la copia."
+        echo "  --delete     Elimina archivos en el destino que no están en el origen."
+        return 1
+    }
+
+    local src="$1"
+    local dest="$2"
+    shift 2  # Desplazar los argumentos para obtener las opciones
+
+    # Construir el comando rsync con --partial habilitado por defecto
+    local rsync_cmd="rsync -WavP"
+
+    # Agregar opciones según los argumentos
+    for option in "$@"; do
+        case "$option" in
+            --dry-run) rsync_cmd+=" --dry-run" ;;
+            --delete) rsync_cmd+=" --delete" ;;
+            *) echo "Opción desconocida: $option"; return 1 ;;
+        esac
+    done
+
+    # Ejecutar el comando rsync
+    eval "$rsync_cmd \"$src\" \"$dest\""
+}
