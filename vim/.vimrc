@@ -5,15 +5,15 @@
 " -----------------------------
 " 1. Configuración Básica
 " -----------------------------
-set nocompatible 
+set nocompatible
 set encoding=utf-8
 set number relativenumber
 set mouse=a
 set hidden
 set noswapfile
 set clipboard=unnamedplus
-set scrolloff=5   
-set showmatch 
+set scrolloff=5
+set showmatch
 
 " -----------------------------
 " 2. Rendimiento
@@ -25,9 +25,16 @@ set updatetime=300
 " -----------------------------
 " 3. Búsqueda e Indentación
 " -----------------------------
-set incsearch hlsearch ignorecase smartcase
-set expandtab tabstop=4 softtabstop=4 shiftwidth=4
-set autoindent smartindent
+set incsearch
+set hlsearch
+set ignorecase
+set smartcase
+set expandtab
+set tabstop=4
+set softtabstop=4
+set shiftwidth=4
+set autoindent
+set smartindent
 
 " --------------------------------
 " 4. Gestión de Plugins (vim-plug)
@@ -57,7 +64,8 @@ Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'joshdick/onedark.vim'
 
-
+" Autocompletado IA
+Plug 'Exafunction/codeium.vim', { 'branch': 'main' }
 " Búsqueda avanzada
 Plug 'mileszs/ack.vim'
 
