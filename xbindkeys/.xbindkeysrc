@@ -3,7 +3,7 @@
 # in this file, and unbind the ones you don't want to use.
 
 # personal launch scripts(Service manager)
-"alacritty --class "service_mg_ioksc" -e ~/dotfiles/scripts/runas.sh"
+"alacritty --class float_custom -e ~/dotfiles/scripts/runas.sh"
     m:0x40 + c:52
     Mod4 + z
 
@@ -56,7 +56,7 @@
     XF86Mail
 
 # f10
-"firefox"
+"marktext"
     m:0x0 + c:180
     XF86HomePage
 
@@ -64,3 +64,11 @@
 "qalculate-qt"
     m:0x0 + c:148
     XF86Calculator
+
+"~/.config/rofi/powermenu/powermenu.sh"
+    m:0x41 + c:24
+    Shift+Mod4 + q
+
+"~/dotfiles/scripts/keybindhelper.sh"
+    m:0x40 + c:67
+    Mod4 + F1
