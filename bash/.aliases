@@ -3,30 +3,39 @@ alias pfetch='fastfetch --config examples/8'
 alias fetch='fastfetch --config examples/13'
 
 # eza - fast alternative to the classic 'ls' command.
-alias ls='eza -al --icons --group-directories-first' 
-alias la='eza -a --icons --group-directories-first'  
-alias ll='eza -alh --icons --group-directories-first'
+alias ls='eza --icons --group-directories-first'
+alias la='eza -a --icons --group-directories-first'
+alias ll='eza -al -g --icons --group-directories-first'
+alias cat='bat'
+alias man='batman'
+alias grep='grep --color=auto'
 
 # display xprop class
-alias xpropc='xprop | grep WM_CLASS' 
+alias xpropc='xprop | grep WM_CLASS'
 
 # pacman remove locks
 alias unlockdb='sudo rm /var/lib/pacman/db.lck'
 
-# grub update   
+# grub update
 alias update-grub='sudo grub-mkconfig -o /boot/grub/grub.cfg'
 
 # fonts cache refresh
 alias update-fonts='fc-cache -f -v'
 
-# alias for fast vim for big files 
-# alias lvim='\vim -c "set nowrap|syntax off"'        
+# alias for fast vim for big files
+# alias lvim='\vim -c "set nowrap|syntax off"'
+
+# Reload the shell (i.e. invoke as a login shell)
+alias reload="exec ${SHELL} -l"
 
 # get error messages from journalctl
 alias jctl="journalctl -p 3 -xb"
 
 # termbin, for fast terminal sharing
 alias tb="nc termbin.com 9999"
+
+# usage: cat "my text" | upl -OR- upl < file.txt
+alias upl='curl -F "file=@-" https://0x0.st' 
 
 # Select the 10 most recently synchronized servers, updated within the last 30 hours
 alias mirror="sudo reflector -f 30 -l 30 --number 10 --verbose --save /etc/pacman.d/mirrorlist"
@@ -44,6 +53,7 @@ alias mirrora="sudo reflector --latest 50 --number 20 --sort age --save /etc/pac
 alias gs="git status"
 alias ga="git add"
 alias gc="git commit -m"
+alias gz="git cz"
 alias gp="git push"
 alias gpl="git pull"
 alias gst="git stash"
@@ -51,7 +61,3 @@ alias gsp="git stash; git pull"
 alias gcheck="git checkout"
 alias gcredential="git config credential.helper store"
 alias glc='git log --graph --abbrev-commit --oneline --decorate'
-
-
-
-
