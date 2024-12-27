@@ -1,5 +1,6 @@
 # Default colors: scheme NightFox
 # Themes from https://github.com/alacritty/alacritty-theme/
+[colors]
 
 [colors.primary]
 background = '#192330'
