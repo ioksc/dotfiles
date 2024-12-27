@@ -1,0 +1,50 @@
+# Light Alacritty Theme
+
+
+[colors.primary]
+background = '#EEE8D5'      # Fondo gris claro, no demasiado blanco
+foreground = '#103956'      # Azul oscuro para texto principal
+dim_foreground = '#586E75'  # Tono de texto atenuado
+bright_foreground = '#00141A' # Casi negro para texto resaltado
+
+[colors.cursor]
+cursor = '#CB4B16'          # Naranja oscuro para cursor
+text = '#FDF6E3'            # Fondo claro para contraste
+
+[colors.hints]
+start = { foreground = '#00141A', background = '#9EACAD' }  # Alto contraste para inicio de hints
+end = { foreground = '#103956', background = '#EEE8D5' }    # Contraste medio para fin de hints
+
+[colors.selection]
+text = '#FFFFFF'            # Blanco para máximo contraste
+background = '#1B6497'      # Azul medio para selección
+
+[colors.normal]
+black = '#073642'           # Gris oscuro
+red = '#A13C11'             # Rojo oscuro
+green = '#596600'           # Verde oscuro
+yellow = '#664D00'          # Amarillo oscuro
+blue = '#1B6497'            # Azul medio
+magenta = '#B02669'         # Magenta oscuro
+cyan = '#1A6265'            # Cyan oscuro
+white = '#EEE8D5'           # Blanco cremoso
+
+[colors.bright]
+black = '#657B83'           # Gris medio
+red = '#F8520E'             # Rojo brillante
+green = '#859900'           # Verde brillante
+yellow = '#B58900'          # Amarillo brillante
+blue = '#268BD2'            # Azul brillante
+magenta = '#D33682'         # Magenta brillante
+cyan = '#2AA198'            # Cyan brillante
+white = '#FFFFFF'           # Blanco puro
+
+[colors.dim]
+black = '#002B36'           # Casi negro
+red = '#5C220A'             # Rojo muy oscuro
+green = '#2C3300'           # Verde muy oscuro
+yellow = '#332700'          # Amarillo muy oscuro
+blue = '#103956'            # Azul muy oscuro
+magenta = '#541232'         # Magenta muy oscuro
+cyan = '#103B3D'            # Cyan muy oscuro
+white = '#9EACAD'           # Gris claro
