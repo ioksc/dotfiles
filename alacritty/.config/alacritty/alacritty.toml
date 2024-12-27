@@ -1,40 +1,30 @@
-# Alacritty Configuration
-# Source https://github.com/alacritty/alacritty
-
+[general]
 import = [
-  "~/.config/alacritty/default.toml",
+  "~/dotfiles/alacritty/.config/alacritty/osaka.toml",
 ]
-
 live_config_reload = true
 
+[window]
+opacity = 0.90
+padding ={ x = 1, y = 1 }
+dynamic_padding = true
+decorations = "none"
+
 [font]
+normal = {family = "MonaspiceRn Nerd Font", style = "Regular"}
 size = 11
-
-[font.normal]
-family = "JetBrainsMono Nerd Font"
-style = "Regular"
-
-[font.bold]
-family = "JetBrainsMono Nerd Font"
-style = "Bold"
+bold = {family = "JetBrainsMono Nerd Font", style = "Bold"}
 
 [mouse]
 hide_when_typing = true
 
-[env]
-TERM = "xterm-256color"
-
 [scrolling]
-history = 10000
+history = 50000
 multiplier = 4
 
 [selection]
 save_to_clipboard = true
 
-[window.padding]
-x = 15
-y = 15
-
 [cursor]
-style = { shape = "Beam", blinking = "On" }
-thickness = 0.15
+style = { shape = "Beam", blinking = "Always" }
+thickness = 0.25
