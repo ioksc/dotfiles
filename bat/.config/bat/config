@@ -9,7 +9,7 @@
 #--paging=never
 
 # disable text selection, unless you press shift.
---pager="less --RAW-CONTROL-CHARS --quit-if-one-screen --mouse"
+# --pager="less --RAW-CONTROL-CHARS --quit-if-one-screen --mouse"
 
 # Syntax mappings: map a certain filename pattern to a language.
 --map-syntax "*.ino:C++"
