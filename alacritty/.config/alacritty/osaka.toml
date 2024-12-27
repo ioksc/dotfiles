@@ -1,0 +1,57 @@
+# Tema Osaka para Alacritty
+# Diseñado para alto contraste y legibilidad
+
+# Colores principales
+[colors.primary]
+background = '#00141A'       # Base más oscura para máximo contraste
+foreground = '#EEE8D5'       # Base clara para buena legibilidad
+dim_foreground = '#9EACAD'   # Un tono medio de la base para texto atenuado
+bright_foreground = '#FDF6E3' # Un tono más brillante para resaltar
+
+# Colores del cursor
+[colors.cursor]
+cursor = '#F8520E'          # Orange brillante para buena visibilidad
+text = '#00141A'            # Base oscura para contraste con el cursor
+
+# Colores de hints
+[colors.hints]
+start = { foreground = '#FDF6E3', background = '#073642' }  # Alto contraste para inicio de hints
+end = { foreground = '#9EACAD', background = '#002B36' }    # Contraste medio para fin de hints
+
+# Colores de selección
+[colors.selection]
+text = '#FFFFFF'            # Blanco puro para máximo contraste
+background = '#103956'      # Blue oscuro para la selección
+
+# Colores normales
+[colors.normal]
+black = '#002B36'           # Base oscura
+red = '#DC322F'            # Red medio
+green = '#859900'          # Green medio
+yellow = '#B58900'         # Yellow medio
+blue = '#268cd2'           # Blue medio
+magenta = '#D33682'        # Magenta medio
+cyan = '#2AA198'           # Cyan medio
+white = '#EEE8D5'          # Base clara
+
+# Colores brillantes
+[colors.bright]
+black = '#073642'          # Base ligeramente más clara
+red = '#FF9D9B'           # Red más brillante
+green = '#D6FFAC'         # Green más brillante
+yellow = '#FFE999'        # Yellow más brillante
+blue = '#AADCFF'          # Blue más brillante
+magenta = '#FF77B9'       # Magenta más brillante
+cyan = '#B9FFFA'          # Cyan más brillante
+white = '#FFFFFF'         # Base más brillante
+
+# Colores atenuados (dim)
+[colors.dim]
+black = '#00141A'          # El tono más oscuro de la base
+red = '#57100F'           # Red oscuro
+green = '#2C3300'         # Green oscuro
+yellow = '#332700'        # Yellow oscuro
+blue = '#103956'          # Blue oscuro
+magenta = '#541232'       # Magenta oscuro
+cyan = '#103B3D'          # Cyan oscuro
+white = '#9EACAD'         # Base media
