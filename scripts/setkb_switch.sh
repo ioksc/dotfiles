@@ -1,25 +1,22 @@
 #!/usr/bin/env bash
 # Clear all options
 # setxkbmap -layout us -option
-# Intercambiar capslock/escape
+# Inverts caps --> capslock/escape
 # setxkbmap -layout us -option caps:swapescape
-# toggle option
+# toggle option, minimal
 # setxkbmap -layout us,us -variant ,intl -option grp:alt_shift_toggle
 # Onliner option
 # alias setkb='setxkbmap -query | grep -q "variant:\s*intl" && setxkbmap us || setxkbmap us -variant intl'
+# setxkbmap -query | awk '/layout/{layout=$2} /variant/{variant=$2} END{if (variant) print toupper(layout) " " variant; else print toupper(layout)}'
 
 toggle_keyboard_layout() {
     if setxkbmap -query | grep -q "variant:\s*intl"; then
         setxkbmap -layout us
-        message="Keyboard layout set to: US"
+        message="US"
     else
         setxkbmap -layout us -variant intl
-        message="Keyboard layout set to: US (International)"
+        message="US (Int)"
     fi
-
-
-    echo "$message"
+echo "$message"
 }
-
-# Call the function
 toggle_keyboard_layout
