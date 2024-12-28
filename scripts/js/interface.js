@@ -1,5 +1,9 @@
-const os = require("os");
-const interfaces = os.networkInterfaces();
+import { networkInterfaces } from "os";
+
+const interfaces = networkInterfaces();
+
+console.log(addr);
+
 Object.keys(interfaces).forEach((name) => {
   interfaces[name].forEach((address) => {
     if (address.family === "IPv4" && !address.internal) {
