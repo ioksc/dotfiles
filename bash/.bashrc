@@ -117,7 +117,7 @@ fi
 [[ -f /usr/share/bash-completion/bash_completion ]] && source /usr/share/bash-completion/bash_completion
 
 # Inicialización de herramientas externas
-eval -- "$(/sbin/starship init bash --print-full-init)"
+eval "$(starship init bash)"
 command -v fzf &>/dev/null && eval "$(fzf --bash)"
 command -v zoxide &>/dev/null && eval "$(zoxide init bash)"
 
