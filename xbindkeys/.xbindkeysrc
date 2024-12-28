@@ -2,6 +2,7 @@
 # ~/.xbindkeysrc in your home directory.  Add keys you want to have by default
 # in this file, and unbind the ones you don't want to use.
 
+
 # personal launch scripts(Service manager)
 "alacritty --class float_custom -e ~/dotfiles/scripts/runas.sh"
     m:0x40 + c:52
@@ -69,6 +70,6 @@
     m:0x41 + c:24
     Shift+Mod4 + q
 
-"~/dotfiles/scripts/keybindhelper.sh"
-    m:0x40 + c:67
-    Mod4 + F1
+"firefox"
+    m:0x40 + c:56
+    Mod4 + b
