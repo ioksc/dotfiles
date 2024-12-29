@@ -1,18 +1,33 @@
 configuration {
+  font:   "Mononoki Nerd Font 11";
   width: 100%;
-  drun-icon-theme: "pop";
   show-icons: true;
-  sidebar-mode: true;
+  icon-theme: "pop";
+  hide-scrollbar: true;
+  
   modi: "drun,run,window";
-  font: "Mononoki Nerd Font 11";
   terminal: "alacritty";
-  display-drun: "";
-  display-run: "";
-  display-window: "";
-  drun-display-format: "{name}";
+  sidebar-mode: true;
+
+  display-drun: "";
+  display-run: "󰆍";
+  display-window: "";
+
+drun-display-format: "{name} [<span foreground='#B0B0B0' weight='light' size='small'><i>({generic})</i></span>]";
+
   location: 0;
   disable-history: false;
-  hide-scrollbar: true;
-  sidebar-mode: true;
+
+  matching: "fuzzy";
+  sort: true;
+  case-sensitive: false;
+  cycle: true;
+
+  kb-remove-to-eol: "";
+  kb-accept-entry: "Return,KP_Enter";
+  kb-row-up: "Up,Control+k";
+  kb-row-down: "Down,Control+j";
 }
-@theme "/home/ioksc/.config/rofi/themes/theme.rasi"
+@theme "themes/osaka.rasi"
+
+

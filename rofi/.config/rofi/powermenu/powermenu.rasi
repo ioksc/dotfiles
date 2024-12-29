@@ -4,18 +4,15 @@ configuration {
 }
 
 * {
-    background:     #15161EFF;
-    background-alt: #1A1B26FF;
+    background:     #002B36;
+    background-alt: #073642;
     foreground:     #C0CAF5FF;
-    selected:       #33467CFF;
-    active:         #414868FF;
-    urgent:         #F7768EFF;
+    selected:       #268BD2;
+    active:         #2AA198;
+    urgent:         #D33682;
     font: "Mononoki Nerd Font 10";
 }
 
-
-
-/*****----- Main Window -----*****/
 window {
     /* properties for window widget */
     transparency:                "real";
@@ -37,7 +34,6 @@ window {
     background-color:            @background;
 }
 
-/*****----- Main Box -----*****/
 mainbox {
     enabled:                     true;
     spacing:                     10px;
@@ -50,7 +46,6 @@ mainbox {
     children:                    [ "inputbar", "message", "listview" ];
 }
 
-/*****----- Inputbar -----*****/
 inputbar {
     enabled:                     true;
     spacing:                     10px;
@@ -71,7 +66,7 @@ dummy {
 textbox-prompt-colon {
     enabled:                     true;
     expand:                      false;
-    str:                         "";
+    str:                         " ";
     padding:                     10px 14px;
     border-radius:               4px;
     background-color:            @urgent;
