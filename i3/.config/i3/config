@@ -3,218 +3,48 @@
 # Default modkey:
 # Mod4 = Super(Win); Mod1 = Alt; Mod2 = Shift; Mod3 = Control
 set $mod Mod4
+# Set Terminal Emulator(Alacritty,kitty,etc.)
 set $terminal alacritty
-# get monitor name: xrandr --query | grep " connected" | cut -d " " -f1
-# set $default_monitor DVI-I-2
-set $default_monitor primary
+# Default monitor set primary
+# set $default_monitor primary
+# Custom Monitor: get monitor name --> xrandr --query | grep " connected" | cut -d " " -f1
+set $default_monitor DVI-I-2
+# Set Font for window titles.
 set $default_font Mononoki Nerd Font 11
-# ---------- General settings ----------
 
-
-# ------ Window settings ------
+# ---------- Window settings ----------
 # hide titlebar
 new_window pixel 1
+
 # normal floating windows
 new_float normal
+
 # Font for window titles.
 font Pango: $default_font
+
 # focus follows mouse (values: yes, no)
 focus_follows_mouse yes
+
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
+
 # Borders
 gaps inner 5
 gaps outer 5
 smart_gaps on
 hide_edge_borders smart
+
 # ------ Window settings ------
+# Keybindings Configuration
+include keybinding.conf
 
+# Workspaces Configuration
+include workspaces.conf
 
-# Start a terminal 
-bindsym $mod+Return exec --no-startup-id $terminal
+# ------ Rules ------
+include windows_rules.conf
 
-# Launcher (rofi):
-bindsym $mod+d exec rofi -show drun
-
-# Launcher (dmenu):
-bindsym $mod+Shift+d exec --no-startup-id dmenu_run -fn 'iMWritingDuo Nerd Font-12' -nb '#002B36' -nf '#808080' -sb '#073642' -sf '#ffffff' -p ':' -i
-
-# Kill focused window
-bindsym $mod+q kill
-
-
-# ----- Navigation Settings -----
-
-# Navegación entre ventanas (estilo vim)
-bindsym $mod+h focus left
-bindsym $mod+j focus down
-bindsym $mod+k focus up
-bindsym $mod+l focus right
-
-# Mover ventanas (estilo vim)
-bindsym $mod+Shift+h move left
-bindsym $mod+Shift+j move down 
-bindsym $mod+Shift+k move up
-bindsym $mod+Shift+l move right
-
-# Cambiar split horizontal/vertical más intuitivo
-bindsym $mod+backslash split h
-bindsym $mod+minus split v
-
-# Enter fullscreen mode for the focused container
-bindsym $mod+f fullscreen toggle
-
-# Change container layout (stacked, tabbed, toggle split)
-bindsym $mod+s layout stacking
-bindsym $mod+w layout tabbed
-bindsym $mod+e layout toggle split
-
-# Toggle tiling / floating
-bindsym $mod+space floating toggle
-
-# Focus the parent container
-bindsym $mod+a focus parent
-
-# Scratchpad
-bindsym $mod+x move scratchpad
-bindsym $mod+Shift+x scratchpad show
-
-# Name the workspaces
-# set $ws1 "1:  "
-# set $ws2 "2:  "
-# set $ws3 "3:  "
-# set $ws4 "4:  "
-# set $ws5 "5:  "
-# set $ws6 "6:  "
-# set $ws7 "7:  "
-# set $ws8 "8:  "
-# set $ws9 "9:  "
-# set $ws0 "10: 󰒍 "
-
-set $ws1 "1"
-set $ws2 "2"
-set $ws3 "3"
-set $ws4 "4"
-set $ws5 "5"
-set $ws6 "6"
-set $ws7 "7"
-set $ws8 "8"
-set $ws9 "9"
-set $ws0 "10"
-
-
-# Switch to workspace
-bindsym $mod+1 workspace $ws1
-bindsym $mod+2 workspace $ws2
-bindsym $mod+3 workspace $ws3
-bindsym $mod+4 workspace $ws4
-bindsym $mod+5 workspace $ws5
-bindsym $mod+6 workspace $ws6
-bindsym $mod+7 workspace $ws7
-bindsym $mod+8 workspace $ws8
-bindsym $mod+9 workspace $ws9
-bindsym $mod+0 workspace $ws0
-
-# Move focused container to workspace
-bindsym $mod+Shift+1 move container to workspace $ws1
-bindsym $mod+Shift+2 move container to workspace $ws2
-bindsym $mod+Shift+3 move container to workspace $ws3
-bindsym $mod+Shift+4 move container to workspace $ws4
-bindsym $mod+Shift+5 move container to workspace $ws5
-bindsym $mod+Shift+6 move container to workspace $ws6
-bindsym $mod+Shift+7 move container to workspace $ws7
-bindsym $mod+Shift+8 move container to workspace $ws8
-bindsym $mod+Shift+9 move container to workspace $ws9
-bindsym $mod+Shift+0 move container to workspace $ws0
-
-# switch to workspace by next or previous
-# Cambiar al siguiente workspace
-bindsym Mod4+Page_Down workspace next
-# Cambiar al workspace anterior
-bindsym Mod4+Page_Up workspace prev
-
-bindsym $mod+Tab workspace next
-bindsym $mod+Shift+Tab workspace prev
-
-# Always open some programs on specified workspace
-assign [class="^firefox"]          $ws1
-assign [class="^(Code|Cursor)$"]   $ws2
-assign [class="^obsidian"]         $ws4
-assign [class="^Thunar"]           $ws5
-assign [class="^Chromium"]         $ws7
-assign [class="^TelegramDesktop"]  $ws9
-assign [class="^Spotify"]          $ws8
-# assign [class="^Thunderbird"]      $ws9
-
-
-# Floating rules
-for_window [class="^(Lxappearance|qalculate-qt|GParted|Blueman-manager|Spek|Gpick)$"] floating enable
-for_window [window_role="^(pop-up|task_dialog)$"] floating enable
-for_window [class='firefox' instance='Places'] floating enable
-
-# No borders
-for_window [class="^(firefox|Chromium|anytype)$"] border none
-
-# Windows sticky rules
-for_window [class="firefox" instance="Toolkit"] sticky enable
-for_window [class="guvcview-qt"] sticky enable
-
-
-# ----- Custom -----
-for_window [class="float_custom"] floating enable, resize set 620 450
-# ----- Custom -----
-
-# Focus on the urgent window
-for_window [urgent=latest] focus
-
-# Always open workspaces in certain outputs(example)
-# workspace "1:  " output primary
-# workspace "2:  " output primary
-# workspace "3:  " output primary
-# workspace "4:  " output primary
-# workspace "5:  " output primary
-# workspace "7: " output primary
-# workspace "8:  " output primary
-# workspace "9:  " output primary
-# workspace "10: 󰒍 " output primary
-# workspace "10: 󰒍 " output HDMI-1
-
-workspace "1" output primary
-workspace "2" output primary
-workspace "3" output primary
-workspace "4" output primary
-workspace "5" output primary
-workspace "7" output primary
-workspace "8" output primary
-workspace "9" output primary
-workspace "10" output primary
-
-
-# Reload the configuration file
-bindsym $mod+Shift+c reload
-
-# Restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
-bindsym $mod+Shift+r restart
-
-mode "resize" {
-    bindsym h resize shrink width 10 px
-    bindsym j resize grow height 10 px
-    bindsym k resize shrink height 10 px
-    bindsym l resize grow width 10 px
-
-    bindsym Left resize shrink width 5 px
-    bindsym Down resize grow height 5 px
-    bindsym Up resize shrink height 5 px
-    bindsym Right resize grow width 5 px
-
-    bindsym Return mode "default"
-    bindsym Escape mode "default"
-}
-
-bindsym $mod+r mode "resize"
-
-
-# -------------------- Colors --------------------
+# ---------- Colors ----------
 set $base03    #002B36
 set $base02    #073642
 set $base01    #586E75
@@ -258,32 +88,19 @@ bar {
     strip_workspace_numbers yes
     workspace_buttons yes
     tray_output $default_monitor
-    
+
     colors {
         background $background
         statusline $base3
         separator  $base01
-        
         # workspace            border      background  text
         focused_workspace     $blue       $blue       $base3
         active_workspace      $base02     $base02     $base1
         inactive_workspace    $base03     $base03     $base00
         urgent_workspace      $red        $red        $base3
-        binding_mode         $cyan       $cyan       $base3
+        binding_mode          $cyan       $cyan       $base3
     }
 }
 
-
-# Startup programs:
-
-# Execute the PolicyKit authentication agent for password entry
-exec --no-startup-id /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
-
-# Start the Gnome Keyring daemon with PKCS#11, secrets, SSH, and GPG support
-exec --no-startup-id /usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh,gpg
-
-# Restore wallpaper(Nitrogen) or feh --bg-fill /path/to/wallpaper.jpg
-exec --no-startup-id sleep 2 && nitrogen --restore
-
-# exec --no-startup-id picom --config ~/.config/picom/picom.conf
-# exec --no-startup-id xfce4-power-manager
+# ---- Startup programs -----
+include startup_app.conf
