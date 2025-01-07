@@ -7,17 +7,14 @@ set $mod Mod4
 set $terminal alacritty
 # Default monitor set primary
 # set $default_monitor primary
-# Custom Monitor: get monitor name --> xrandr --query | grep " connected" | cut -d " " -f1
+# Custom Monitor: get monitor name --> xrandr --query | grep " connected" | cut -d " " -f1 
 set $default_monitor DVI-I-2
 # Set Font for window titles.
 set $default_font Mononoki Nerd Font 11
 
 # ---------- Window settings ----------
-# hide titlebar
-new_window pixel 1
-
-# normal floating windows
-new_float normal
+# Determines which border style new windows will have
+default_border pixel 1
 
 # Font for window titles.
 font Pango: $default_font
@@ -94,11 +91,11 @@ bar {
         statusline $base3
         separator  $base01
         # workspace            border      background  text
-        focused_workspace     $blue       $blue       $base3
-        active_workspace      $base02     $base02     $base1
-        inactive_workspace    $base03     $base03     $base00
-        urgent_workspace      $red        $red        $base3
-        binding_mode          $cyan       $cyan       $base3
+        focused_workspace     $blue       $blue         $base3
+        active_workspace      $base02     $base02       $base1
+        inactive_workspace    $base03     $base03       $base00
+        urgent_workspace      $red        $red          $base3
+        binding_mode          $yellow     $yellow       $base3
     }
 }
 
