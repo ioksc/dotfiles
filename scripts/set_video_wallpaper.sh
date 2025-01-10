@@ -1,36 +1,81 @@
 #!/bin/bash
 
-logfile="$HOME/.xwinwrap_mpv.log"
+set -euo pipefail
 
-# Usar mktemp para un archivo temporal para el PID
-pidfile=$(mktemp)
+readonly LOG_FILE="${HOME}/.xwinwrap_mpv.log"
+readonly TEMP_DIR=$(mktemp -d)
+readonly XWINWRAP_PIDFILE="${TEMP_DIR}/xwinwrap.pid"
+readonly MPV_PIDFILE="${TEMP_DIR}/mpv.pid"
 
-# Función para limpiar al salir
 cleanup() {
-    rm -f "$pidfile"
-    # Evitar mensajes de error si los procesos ya no existen
-    pkill -9 -f "xwinwrap -ov -g 1920x1080" 2>/dev/null
-    pkill -9 -f "mpv" 2>/dev/null
+    local pid
+    if [[ -f "${XWINWRAP_PIDFILE}" ]] && read -r pid < "${XWINWRAP_PIDFILE}"; then
+        kill -15 "$pid" 2>/dev/null || true
+    fi
+    if [[ -f "${MPV_PIDFILE}" ]] && read -r pid < "${MPV_PIDFILE}"; then
+        kill -15 "$pid" 2>/dev/null || true
+    fi
+    rm -rf "${TEMP_DIR}"
 }
 
-# Capturar señales de interrupción y terminación
-trap cleanup INT TERM EXIT
+log_message() {
+    printf '%s: %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >> "${LOG_FILE}"
+}
 
-# Verificar si el archivo de video existe
-if [[ ! -f "$1" ]]; then
-    echo "Error: El archivo de video '$1' no existe" >> "$logfile"
-    exit 1
-fi
+get_screen_dimensions() {
+    local dimensions
+    dimensions=$(xdpyinfo | awk '/dimensions:/ {print $2}')
+    echo "${dimensions}"
+}
 
-# Obtener el ancho y alto de la pantalla dinámicamente
-width=$(xdpyinfo | grep 'dimensions:' | awk '{print $2}' | cut -dx -f1)
-height=$(xdpyinfo | grep 'dimensions:' | awk '{print $2}' | cut -dx -f2)
+main() {
+    # Verificar argumentos
+    if [[ $# -ne 1 ]]; then
+        log_message "Error: Se requiere un archivo como argumento"
+        exit 1
+    fi
 
-# Iniciar nuevo wallpaper y guardar el PID
-xwinwrap -ov -g "${width}x${height}" -- mpv -wid '%WID%' --loop --no-audio --no-osc --no-osd-bar --quiet --panscan=1.0 "$1" >> "$logfile" 2>&1 &
-echo $! > "$pidfile"
+    local video_file="$1"
+    if [[ ! -f "${video_file}" ]]; then
+        log_message "Error: Archivo '${video_file}' no existe"
+        exit 1
+    fi
 
-echo "Iniciado xwinwrap con PID: $(cat "$pidfile")" >> "$logfile"
+    # Registrar señales para limpieza
+    trap cleanup EXIT INT TERM
 
-# Mantener el script en ejecución (opcional, pero útil para la limpieza con trap)
-wait $(cat "$pidfile")
+    local dimensions
+    dimensions=$(get_screen_dimensions)
+
+    # Iniciar xwinwrap
+    xwinwrap -ov -g "${dimensions}" -- \
+        mpv -wid '%WID%' \
+            --loop \
+            --no-audio \
+            --no-osc \
+            --no-osd-bar \
+            --quiet \
+            --panscan=1.0 \
+            --vo=xv \
+            "${video_file}" >> "${LOG_FILE}" 2>&1 &
+
+    local xwinwrap_pid=$!
+    echo "${xwinwrap_pid}" > "${XWINWRAP_PIDFILE}"
+
+    sleep 0.2
+
+    local mpv_pid
+    mpv_pid=$(pgrep -P "${xwinwrap_pid}")
+
+    if [[ -n "${mpv_pid}" ]]; then
+        echo "${mpv_pid}" > "${MPV_PIDFILE}"
+        log_message "Iniciado xwinwrap (PID: ${xwinwrap_pid}) y mpv (PID: ${mpv_pid})"
+    else
+        log_message "Error al obtener el PID de mpv"
+        exit 1
+    fi
+
+    wait "${xwinwrap_pid}" || true
+}
+
+main "$@"
