@@ -27,6 +27,7 @@ get_aur_updates() {
 
 # Función para obtener el total de actualizaciones
 get_total_updates() {
+    
     local official_updates=$(get_updates "$CHECKUPDATES")
     local aur_updates=$(get_aur_updates)
     echo $((official_updates + aur_updates))
@@ -35,25 +36,25 @@ get_total_updates() {
 format_output() {
     local updates="$1"
     if [ "$updates" -eq 0 ]; then
-        echo "<span color='#98C379'>$updates</span>"   
+        echo "<span color='#98C379'>$updates</span>"
     elif [ "$updates" -lt 10 ]; then
-        echo "<span color='#E5C07B'>$updates</span>"  
+        echo "<span color='#E5C07B'>$updates</span>"
     else
-        echo "<span color='#FF6B6B'>$updates</span>"   
+        echo "<span color='#FF6B6B'>$updates</span>"
     fi
 }
 
 # Manejo de clicks para i3blocks
 case "$BLOCK_BUTTON" in
-    1)  
+    1)
         # Click izquierdo
         format_output "$(get_total_updates)"
         ;;
-    3)  
+    3)
         # Click derecho
-        alacritty --class float_custom -e bash -c "paru" && format_output "$(get_total_updates)"
+        alacritty --class float_custom -e paru && format_output "$(get_total_updates)"
         ;;
-    *)  
+    *)
         # Sin click
         format_output "$(get_total_updates)"
         ;;
