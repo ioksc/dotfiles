@@ -1,95 +1,50 @@
 separator=false
 color="#ffff"
-separator_block_width=12
+separator_block_width=9
 markup=pango
 
 [openpvn]
 command=node ~/dotfiles/scripts/js/network_info.js | awk -F ': ' '{printf "<span color=\"#6C71C4\">%s</span> %s\n", $1, $2}'
 interval=15
 label=<span color="#6C71C4">  </span>
-border=#6C71C4
-border_top=0
-border_right=0
-border_bottom=0
-border_left=0
 
 [arch_update]
-command= ~/dotfiles/scripts/arch_aur_updates.sh
+command= ~/dotfiles/scripts/arch_updates.sh
 interval=once
-label=<span color="#268BD2">  </span>
-border=#268BD2
-border_top=0
-border_right=0
-border_bottom=0
-border_left=0
+label=<span color="#268BD2"> </span>
 
 
 [keyboard]
 command=~/dotfiles/scripts/keyboard_layout.sh
 interval=once
 label=<span color="#2AA198">  </span>
-border=#2AA198
-border_top=0
-border_right=0
-border_bottom=0
-border_left=0
 
 [root]
-command=df -h / | awk 'FNR==2 { gsub(/[A-Za-z]/, ""); printf "%i<span color=\"#B58900\"> GiB</span>\n", $4 }'
+command=df --output=avail / | tail -n 1 | numfmt --to=iec-i --from-unit=1024 --format="%.2f" | tr -d 'A-Za-z' 
 interval=10
 label=<span color="#B58900"> </span>
-border=#B58900
-border_top=0
-border_right=0
-border_bottom=0
-border_left=0
 
 [cpu]
 command=mpstat 1 1 | awk '/all/ {print 100 - $12 "%"}'
 interval=5
 label=<span color="#859900"> </span>
-border=#859900
-border_top=0
-border_right=0
-border_bottom=0
-border_left=0
 
 [volume]
 command=~/dotfiles/scripts/volman.sh
-interval=2
+interval=1
 label=<span color="#D33682"></span>
-border=#D33682
-border_top=0
-border_right=0
-border_bottom=0
-border_left=0
 
 [time_madrid]
 command=TZ="Europe/Madrid" date '+%H : %M %Z' | awk '{ printf "%s<span color=\"#2AA198\">%s</span>%s<span color=\"#2AA198\"> %s</span>\n", $1, $2, $3, $4 }'
 interval=10
 label=<span color="#2AA198">󱑒 </span>
-border=#2AA198
-border_top=0
-border_right=0
-border_bottom=0
-border_left=0
 
 [time_est]
-command=TZ=":America/Chicago" date '+%H : %M %Z' | awk '{ printf "%s<span color=\"#268BD2\">%s</span>%s<span color=\"#268BD2\"> %s</span>\n", $1, $2, $3, $4 }'
+command=TZ=":America/La_Paz" date '+%H : %M %Z' | awk '{ printf "%s<span color=\"#268BD2\">%s</span>%s<span color=\"#268BD2\"> %s</span>\n", $1, $2, $3, $4 }' | sed 's/  / /g'
 interval=10
 label=<span color="#268BD2">󱑒 </span>
-border=#268BD2
-border_top=0
-border_right=0
-border_bottom=0
-border_left=0
 
 [date]
-command=date '+%d %b %Y%a'
+command=date '+%d %b %Y'
 interval=3600
 label=<span color="#DC322F">󰸘 </span>
-border=#DC322F
-border_top=0
-border_right=0
-border_bottom=0
-border_left=0

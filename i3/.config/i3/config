@@ -6,9 +6,9 @@ set $mod Mod4
 # Set Terminal Emulator(Alacritty,kitty,etc.)
 set $terminal alacritty
 # Default monitor set primary
-# set $default_monitor primary
-# Custom Monitor: get monitor name --> xrandr --query | grep " connected" | cut -d " " -f1 
-set $default_monitor DVI-I-2
+set $default_monitor primary
+# Custom Monitor: get monitor name --> xrandr --query | grep " connected" | cut -d " " -f1
+# set $default_monitor DVI-I-2
 # Set Font for window titles.
 set $default_font Mononoki Nerd Font 11
 
@@ -86,6 +86,8 @@ bar {
     workspace_buttons yes
     tray_output $default_monitor
 
+    workspace_min_width 30
+    strip_workspace_name no
     colors {
         background $background
         statusline $base3
