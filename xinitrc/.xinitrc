@@ -24,7 +24,7 @@ xset b off         # Deshabilitar sonido de campana
 xset -dpms         # Deshabilitar DPMS (Display Power Management System)
 xset m 0/0         # Deshabilitar aceleración del ratón
 # xset s off       # Deshabilitar protector de pantalla (opcional)
-xrandr --output DVI-I-2 --mode 1920x1080 --primary
+
 # Iniciar el gestor de ventanas i3
 exec i3
 
