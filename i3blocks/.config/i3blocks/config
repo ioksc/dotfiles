@@ -39,10 +39,6 @@ command=TZ="Europe/Madrid" date '+%H : %M %Z' | awk '{ printf "%s<span color=\"#
 interval=10
 label=<span color="#2AA198">󱑒 </span>
 
-[time_est]
-command=TZ=":America/La_Paz" date '+%H : %M %Z' | awk '{ printf "%s<span color=\"#268BD2\">%s</span>%s<span color=\"#268BD2\"> %s</span>\n", $1, $2, $3, $4 }' | sed 's/  / /g'
-interval=10
-label=<span color="#268BD2">󱑒 </span>
 
 [date]
 command=date '+%d %b %Y'
