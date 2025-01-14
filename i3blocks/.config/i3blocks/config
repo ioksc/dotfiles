@@ -1,5 +1,5 @@
 separator=false
-color="#ffff"
+color="#f2f2f2"
 separator_block_width=9
 markup=pango
 
@@ -13,6 +13,9 @@ command= ~/dotfiles/scripts/arch_updates.sh
 interval=once
 label=<span color="#268BD2"> </span>
 
+[redshift]
+command=~/dotfiles/scripts/nightmode.sh
+interval=once
 
 [keyboard]
 command=~/dotfiles/scripts/keyboard_layout.sh
