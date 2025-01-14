@@ -48,8 +48,8 @@ main() {
     dimensions=$(get_screen_dimensions)
 
     # Iniciar xwinwrap
-    xwinwrap -ov -g "${dimensions}" -- \
-        mpv -wid '%WID%' \
+    command xwinwrap -ov -g "${dimensions}" -- \
+        mpv -wid %WID \
             --loop \
             --no-audio \
             --no-osc \
@@ -63,18 +63,16 @@ main() {
     echo "${xwinwrap_pid}" > "${XWINWRAP_PIDFILE}"
 
     sleep 0.2
-
-    local mpv_pid
-    mpv_pid=$(pgrep -P "${xwinwrap_pid}")
+    mpv_pid=$(pidof mpv)
 
     if [[ -n "${mpv_pid}" ]]; then
         echo "${mpv_pid}" > "${MPV_PIDFILE}"
         log_message "Iniciado xwinwrap (PID: ${xwinwrap_pid}) y mpv (PID: ${mpv_pid})"
     else
         log_message "Error al obtener el PID de mpv"
+        cleanup # Limpiar en caso de error
         exit 1
     fi
-
     wait "${xwinwrap_pid}" || true
 }
 

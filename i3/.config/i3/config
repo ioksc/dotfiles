@@ -10,7 +10,7 @@ set $default_monitor primary
 # Custom Monitor: get monitor name --> xrandr --query | grep " connected" | cut -d " " -f1
 # set $default_monitor DVI-I-2
 # Set Font for window titles.
-set $default_font Mononoki Nerd Font 11
+set $default_font Terminess Nerd Font 13
 
 # ---------- Window settings ----------
 # Determines which border style new windows will have
