@@ -38,7 +38,7 @@ interval=1
 label=<span color="#D33682"></span>
 
 [time_madrid]
-command=TZ="Europe/Madrid" date '+%H : %M %Z' | awk '{ printf "%s<span color=\"#2AA198\">%s</span>%s<span color=\"#2AA198\"> %s</span>\n", $1, $2, $3, $4 }'
+command=TZ="Europe/Madrid" date '+%H:%M<span color="#2AA198">%Z</span>'
 interval=10
 label=<span color="#2AA198">󱑒 </span>
 
