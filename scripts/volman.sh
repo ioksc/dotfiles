@@ -1,25 +1,27 @@
 #!/bin/bash
-# for i3blocks volume script
+# Script de volumen para i3blocks
+COLOR="#D33682"  
+
+# Manejar clic del mouse
 if [[ "$BLOCK_BUTTON" -eq 1 ]]; then
     wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
 fi
 
-# Obtener estado actual
-is_muted=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -i "MUTED" || echo "")
-current_volume=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print int($2 * 100)}')
+# Obtener datos de volumen una sola vez
+volume_info=$(wpctl get-volume @DEFAULT_AUDIO_SINK@)
+is_muted=$(grep -qi "muted" <<< "$volume_info" && echo "true")
+current_volume=$(awk '{print int($2 * 100)}' <<< "$volume_info")
 
-# Mostrar el estado apropiado
+# Determinar salida según estado
 if [[ -n "$is_muted" ]]; then
-    echo "<span color='#D33682'> </span>Muted"
+    echo "<span color='$COLOR'> Muted</span>"
 else
-    # Se agregan condiciones para diferentes iconos de volumen
-    if [[ "$current_volume" -le 20 ]]; then
-        echo "<span color='#D33682'> </span> $current_volume%"
-    elif [[ "$current_volume" -le 50 ]]; then
-        echo "<span color='#D33682'> </span> $current_volume%"
-    elif [[ "$current_volume" -le 100 ]]; then
-        echo "<span color='#D33682'> </span> $current_volume%"
+    if (( current_volume <= 20 )); then
+        icon=""
+    elif (( current_volume <= 50 )); then
+        icon=""
     else
-        echo "<span color='#D33682'> </span> $current_volume%"
+        icon=""
     fi
+    echo "<span color='$COLOR'>$icon $current_volume%</span>"
 fi
