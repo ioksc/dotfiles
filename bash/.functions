@@ -96,19 +96,7 @@ compress() {
     local src="$1" fmt="$2" out="${3:-$1}"
     [[ ! -e "$src" ]] && { _error "No existe: $src"; return 1; }
 
-    # Mostrar progreso
-    _progress() {
-        local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
-        while kill -0 $1 2>/dev/null; do
-            for i in $(seq 0 9); do
-                printf "\r${_B}%s${_N} Comprimiendo..." "${spin:$i:1}"
-                sleep 0.1
-            done
-        done
-        printf "\r"
-    }
-
-    local cmd size_before size_after
+    local cmd size_before size_after tmp_err
     size_before=$(du -sh "$src" | cut -f1)
 
     case "$fmt" in
@@ -121,17 +109,43 @@ compress() {
     esac
 
     _info "Comprimiendo con $fmt_name..."
-    $cmd "${out}.${fmt}" "$src" >/dev/null 2>&1 &
-    _progress $!
+    tmp_err=$(mktemp)  # Archivo temporal para errores
 
-    if (($? == 0)); then
-        size_after=$(du -sh "${out}.${fmt}" | cut -f1)
-        _success "Comprimido: ${out}.${fmt}"
-        _info "📊 Original: $size_before → Comprimido: $size_after"
+    # Desactiva mensajes de control de trabajos
+    set +m
+    $cmd "${out}.${fmt}" "$src" >/dev/null 2>"$tmp_err" &
+    local pid=$!
+
+    # Spinner
+    local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+    local i=0
+    while kill -0 $pid 2>/dev/null; do
+        printf "\r${_B}%s${_N} Comprimiendo..." "${spin:$i:1}"
+        sleep 0.1
+        ((i = (i + 1) % 10))
+    done
+    printf "\r\033[K"  # Limpia la línea
+
+    wait $pid  # Captura el estado de salida
+    local status=$?
+    set -m  # Reactiva mensajes de control
+
+    if (($status == 0)); then
+        if [[ -e "${out}.${fmt}" ]]; then
+            size_after=$(du -sh "${out}.${fmt}" | cut -f1)
+            _success "Comprimido: ${out}.${fmt}"
+            _info "📊 Original: $size_before → Comprimido: $size_after"
+        else
+            _error "El archivo comprimido no se generó."
+            status=1
+        fi
     else
-        _error "Error al comprimir"
-        return 1
+        _error "Error al comprimir. Detalles:"
+        cat "$tmp_err" >&2
     fi
+
+    rm -f "$tmp_err"
+    return $status
 }
 
 # Función de Fuzzy History
