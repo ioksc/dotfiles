@@ -1,126 +1,98 @@
-
-[[ $- != *i* ]] && return # Si no se está ejecutando de forma interactiva, no hacer nada
+# ===== Verificación de Shell Interactivo =====
+[[ $- != *i* ]] && return
 
 # ===== Información del Sistema =====
 if command -v fastfetch >/dev/null; then
-    if [ -z "$TMUX" ]; then
-        if tty | grep -q "/dev/tty[0-9]"; then
-            fastfetch --config examples/20 2>/dev/null
-        elif [ "$TERM" != "linux" ]; then
-            fastfetch --config examples/8 2>/dev/null
-        fi
+    if [[ -z "$TMUX" ]] && tty | grep -q "/dev/tty[0-9]"; then
+        clear
+        fastfetch --config examples/20 2>/dev/null
+    elif [[ "$TERM" != "linux" ]] && [[ -z "$TMUX" ]]; then
+        fastfetch --config examples/8 2>/dev/null
     fi
 fi
 
 # ===== Configuración Básica =====
-# Configuración del editor
-export EDITOR=vim
-export VISUAL="${EDITOR}"
-# export SUDO_PROMPT= 'Ingresa tu contraseña: '
-export SUDO_PROMPT=$'\e[36m 󰒃 [sudo] \e[1m\033[5mIngresa tu contraseña: \e[0m'
+export EDITOR="vim"
+export VISUAL="$EDITOR"
 
-# export TERM="xterm-256color"
+alias sudo='sudo -E'
+export SUDO_PROMPT=$'\e[36m󰒃 \e[1m[sudo]\e[0m \e[36mContraseña:\e[0m '
+# ===== Configuraciones de Seguridad =====
+umask 027
+export HISTCONTROL="ignoreboth:erasedups"
+export HISTIGNORE="ls:ll:pwd:exit:cd:cd -:cd ..:rm*:clear:history:h:bg:fg:jobs"
 
-# ===== Configuraciones de Seguridad Mejoradas =====
-umask 027                  # Permisos de archivo restrictivos
-
-# ===== Configuración de Historial =====
-export HISTSIZE=100000
-export HISTFILESIZE=200000
-export HISTCONTROL=ignoreboth:erasedups
-export HISTIGNORE="ls:ll:pwd:exit:cd -:cd ..:rm*:clear:history:h:bg:fg:jobs"
+# ===== Gestión de Historial Mejorada =====
+export HISTSIZE=1000000
+export HISTFILESIZE=2000000
 export HISTTIMEFORMAT="[%F %T] "
-export HISTFILE=~/.bash_history
+export HISTFILE="$HOME/.bash_history"
+shopt -s histappend cmdhist lithist
 
-
-# Guardar y recargar el historial después de cada comando
 PROMPT_COMMAND="history -a; history -n; ${PROMPT_COMMAND}"
 
-# ===== Opciones de Shell =====
-# Navegación de directorio mejorada
-shopt -s autocd cdspell direxpand dirspell
+# ===== Opciones del Shell =====
+shopt -s autocd cdspell direxpand dirspell globstar nocaseglob checkwinsize
 
-# Mejoras del historial
-shopt -s histappend histverify histreedit
-
-# Coincidencia de patrones y globbing
-shopt -s extglob globstar nocaseglob
-
-# Control de trabajos y edición de línea de comandos
-shopt -s checkwinsize cmdhist lithist
-
-# ===== Configuración de FZF =====
+# ===== Configuración Avanzada de FZF =====
 if command -v fzf >/dev/null; then
-    # Verificar herramientas de previsualización
-    PREVIEW_CMD=""
-    if command -v bat >/dev/null; then
-        PREVIEW_CMD="bat --style=numbers --color=always {}"
-    else
-        PREVIEW_CMD="cat {}"
-    fi
+    # Comandos de búsqueda mejorados
+    search_cmd="fd --type f --hidden --follow --exclude .git 2>/dev/null"
+    dir_cmd="fd --type d --hidden --follow --exclude .git 2>/dev/null"
 
-    if command -v eza >/dev/null; then
-        PREVIEW_CMD="$PREVIEW_CMD || (eza -T -L 2 --color=always {})"
-    else
-        PREVIEW_CMD="$PREVIEW_CMD || (ls -la --color=always {})"
-    fi
+    export FZF_DEFAULT_COMMAND="$search_cmd"
+    export FZF_CTRL_T_COMMAND="$search_cmd"
+    export FZF_ALT_C_COMMAND="$dir_cmd"
+
+    # Configuración de preview dinámica
+    preview_cmd='bat --style=numbers --color=always {} 2>/dev/null || eza -T -L 2 --color=always {} 2>/dev/null || ls -la --color=always {} 2>/dev/null'
 
     export FZF_DEFAULT_OPTS="
         --height 60%
         --layout=reverse
         --border sharp
-        --marker='✓'
+        --preview-window=hidden
         --pointer='▶'
-        --preview-window=right:40%
-        --preview '$PREVIEW_CMD || echo {} 2> /dev/null | head -200'
+        --marker='✓'
+        --color=dark
+        --color='fg:#9EACAD,fg+:#EEE8D5,bg:#00141A,bg+:#002B36'
+        --color='info:#6C71C4,prompt:#268BD2,pointer:#B58900'
+        --color='marker:#B58900,spinner:#2AA198,header:#268BD2'
         --bind 'ctrl-/:toggle-preview'
-        --bind 'ctrl-y:execute-silent(echo -n {} | xclip -selection clipboard)+abort'
-        --bind 'ctrl-e:execute(${EDITOR:-vim} {})+abort'
+        --bind 'ctrl-space:toggle-preview'
+        --bind 'ctrl-y:execute-silent(echo -n {} | xsel -ib)+abort'
+        --bind 'ctrl-e:execute($EDITOR {})+abort'
         --bind 'ctrl-f:preview-page-down'
         --bind 'ctrl-b:preview-page-up'
         --bind 'alt-j:preview-down'
         --bind 'alt-k:preview-up'
-        --bind 'ctrl-space:toggle-preview'
         --bind 'ctrl-a:select-all'
         --bind 'ctrl-d:deselect-all'
-        --color=dark
-        --color='fg:#9EACAD,fg+:#EEE8D5,bg:#00141A,bg+:#002B36'
-        --color='info:#6C71C4,prompt:#268BD2,pointer:#B58900'
-        --color='marker:#B58900,spinner:#2AA198,header:#268BD2'"
+        --preview '$preview_cmd || echo {} | head -200'"
 
-    # Configuración mejorada de FZF con manejo de errores
-    if command -v fd >/dev/null; then
-        export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
-        export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-        export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
-    else
-        export FZF_DEFAULT_COMMAND='find . -type f -not -path "*/\.git/*" 2>/dev/null'
-        export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-        export FZF_ALT_C_COMMAND='find . -type d -not -path "*/\.git/*" 2>/dev/null'
-    fi
-fi
-
-
-if command -v bat >/dev/null; then
-    export MANPAGER="sh -c 'col -bx | bat -l man -p --theme=default'"
-    export MANROFFOPT="-c"
-    export BAT_PAGER="less -RF"
-    export MANROFFOPT="-P -c"
+    # Carga de key-bindings adicionales
+    [[ -f /usr/share/fzf/key-bindings.bash ]] && source /usr/share/fzf/key-bindings.bash
 fi
 
 # ===== Herramientas Externas =====
-# Cargar alias y funciones con verificación de errores
+# Bat para manuales
+command -v bat >/dev/null && export MANPAGER="sh -c 'col -bx | bat -l man -p --theme=default'"
+
+# Zoxide (cd inteligente)
+command -v zoxide >/dev/null && eval "$(zoxide init bash --hook prompt)"
+
+# Starship Prompt (carga optimizada)
+if command -v starship >/dev/null; then
+    export STARSHIP_CONFIG="$HOME/.config/starship.toml"
+    eval "$(starship init bash --print-full-init | grep -v 'set -o promptpmptpmt')"
+fi
+
+# Carapace (autocompletado avanzado)
+command -v carapace >/dev/null && source <(carapace _carapace)
+
+# ===== Carga de Configuraciones Adicionales =====
 [[ -f ~/.aliases ]] && source ~/.aliases
 [[ -f ~/.functions ]] && source ~/.functions
 
-# Bash Autocompletion
-[[ -f /usr/share/bash-completion/bash_completion ]] && source /usr/share/bash-completion/bash_completion
-
-# Inicialización de herramientas externas
-eval "$(starship init bash)"
-command -v fzf &>/dev/null && eval "$(fzf --bash)"
-command -v zoxide &>/dev/null && eval "$(zoxide init bash)"
-
-# Carapace
-export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense' # opcional
-source <(carapace _carapace)
+# ===== Limpieza Final =====
+unset preview_cmd search_cmd dir_cmd
