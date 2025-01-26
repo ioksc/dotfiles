@@ -3,10 +3,16 @@ color="#f2f2f2"
 separator_block_width=9
 markup=pango
 
+[window_title]
+command=xdotool getactivewindow getwindowname
+interval=1
+label=<span color="#268BD2"> </span>
+
 [openpvn]
 command=node ~/dotfiles/scripts/js/network_info.js | awk -F ': ' '{printf "<span color=\"#6C71C4\">%s</span> %s\n", $1, $2}'
-interval=15
+interval=30
 label=<span color="#6C71C4">  </span>
+
 
 [arch_update]
 command= ~/dotfiles/scripts/arch_updates.sh
@@ -14,7 +20,7 @@ interval=once
 label=<span color="#268BD2"> </span>
 
 [redshift]
-command=~/dotfiles/scripts/nightmode.sh
+command=~/dotfiles/scripts/redshift-toogle.sh
 interval=once
 
 [keyboard]
@@ -23,7 +29,7 @@ interval=once
 label=<span color="#2AA198">  </span>
 
 [root]
-command=df --output=avail / | tail -n 1 | numfmt --to=iec-i --from-unit=1024 --format="%.2f" | tr -d 'A-Za-z' 
+command=df --output=avail / | tail -n 1 | numfmt --to=iec-i --from-unit=1024 --format="%.2f" | tr -d 'A-Za-z'
 interval=10
 label=<span color="#B58900"> </span>
 
