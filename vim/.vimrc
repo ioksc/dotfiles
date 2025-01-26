@@ -3,9 +3,9 @@ set encoding=utf-8
 filetype plugin indent on
 
 " Performance optimizations
-" set lazyredraw
+set lazyredraw
 set updatetime=500
-" set cursorline
+set cursorline
 set regexpengine=2
 
 set number
@@ -28,7 +28,7 @@ set shortmess+=c
 set signcolumn=yes
 
 " Wildmenu improvements
-" 
+"
 set wildmenu
 set wildmode=longest:full,full
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*/.git/*,*/node_modules/*,*.pyc
@@ -45,7 +45,7 @@ set formatoptions+=j
 set backspace=indent,eol,start
 
 " 4. Plugin Management (vim-plug)
-" 
+"
 " Auto-install vim-plug
 " let data_dir = '~/.vim'
 " if empty(glob(data_dir . '/autoload/plug.vim'))
@@ -55,7 +55,7 @@ set backspace=indent,eol,start
 call plug#begin('~/.vim/plugged')
 
 " Essential plugins with lazy loading
-Plug 'sheerun/vim-polyglot'                                                       " Syntax highlighting    
+Plug 'sheerun/vim-polyglot'                                                       " Syntax highlighting
 Plug 'dense-analysis/ale', {'for': ['python', 'javascript', 'typescript']}
 Plug 'tpope/vim-fugitive'                                                         " Git integration
 Plug 'airblade/vim-gitgutter'                                                     " Git signs

@@ -49,7 +49,7 @@ main() {
 
     # Iniciar xwinwrap
     command xwinwrap -ov -g "${dimensions}" -- \
-        mpv -wid %WID \
+        mpv -wid %WID% \
             --loop \
             --no-audio \
             --no-osc \

@@ -1,6 +1,6 @@
 
 # for a list of all available themes. Run `bat --list-themes`
---theme="TwoDark"
+--theme="OneHalfDark"
 
 # This is not supported on all, terminal emulators (like tmux, by default):
 --italic-text=always
