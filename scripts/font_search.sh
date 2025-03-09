@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
 search_term="${1:-}"
-fc-list | grep -ioE ": [^:]*$search_term[^:]*" | sed -E 's/(^: |:)//g' | tr ',' '\n' | sort -u
+fc-list | awk -F': ' '{split($2, families, ","); for (f in families) { sub(/:.*/,"",families[f]); print families[f]}}' | sort -u | grep -i "$search_term"
