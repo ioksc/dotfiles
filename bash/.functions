@@ -1,3 +1,9 @@
+pkg() {
+    cache_file=~/.cache/paru_pkglist
+    [[ ! -f "$cache_file" || $(find "$cache_file" -mtime +1) ]] && paru -Slq > "$cache_file"
+    fzf --multi --preview 'paru -Si {}' --preview-window=wrap < "$cache_file" | xargs -ro paru -S
+}
+
 tm() {
     [[ -n "$TMUX" ]] && change="switch-client" || change="attach-session"
     if [ $1 ]; then
@@ -17,7 +23,7 @@ tmk() {
     fi
 }
 
-function y() {
+y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
 	yazi "$@" --cwd-file="$tmp"
 	if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
@@ -69,9 +75,9 @@ extract() {
         *.tar.bz2|*.tbz2) tar -xjf "$file" ;;
         *.tar.gz|*.tgz)   tar -xzf "$file" ;;
         *.tar.xz|*.txz)   tar -xJf "$file" ;;
-        *.zip)            unzip "$file"     ;;
-        *.rar)            unrar x "$file"   ;;
-        *.7z)             7z x "$file"      ;;
+        *.zip)            unzip "$file"    ;;
+        *.rar)            unrar x "$file"  ;;
+        *.7z)             7z x "$file"     ;;
         *) _error "Formato desconocido: $file"; return 1 ;;
     esac
 
@@ -84,11 +90,11 @@ compress() {
     ${_ZIP} ${_Y}Uso:${_N} compress <archivo/directorio> <formato> [nombre]
 
     ${_INFO} Formatos:
-     • zip    📦 (compatible)
-     • tar.gz 🚀 (rápido)
-     • tar.bz2 🗜️ (compresión alta)
-     • tar.xz 💎 (mejor compresión)
-     • 7z     🎯 (versátil)"
+        • zip    📦 (compatible)
+        • tar.gz 🚀 (rápido)
+        • tar.bz2 🗜️ (compresión alta)
+        • tar.xz 💎 (mejor compresión)
+        • 7z     🎯 (versátil)"
 
     [[ -z "$1" || -z "$2" ]] && { echo -e "$usage"; return 1; }
     _check_deps || return 1
@@ -148,42 +154,30 @@ compress() {
     return $status
 }
 
-# Función de Fuzzy History
-fh() {
-    local cmd
-    cmd=$(history | \
-        fzf --no-sort \
-            --tac \
-            --preview 'echo {}' \
-            --preview-window='down:3:wrap' \
-            --header='⌨️  Selecciona un comando del historial' | \
-        sed 's/ *[0-9]* *//') && \
-    echo "Ejecutando: $cmd" && \
-    eval "$cmd"
-}
+
 
 backup() {
     local HELP_TEXT="
     📦 Uso: backup <origen> <destino> [opciones]
 
     Opciones:
-      -p, --preview    Previsualiza los cambios sin realizar la copia
-      -d, --delete     Elimina archivos en destino que no existen en origen
-      -v, --verbose    Muestra información detallada
-      -f, --fast       Modo rápido (útil para red local)
-      -c, --checksum   Verifica la integridad de los archivos
-      -i, --ignore     Ignora archivos temporales y caché
-      -s, --smart      Modo inteligente (auto-detecta mejor configuración)
-      -z, --zip        Comprime durante la transferencia
-      -l, --log        Guarda log de la operación
-      -b, --bandwidth RATE  Limita el ancho de banda (ej: 1M, 500K)
-      -r, --retry      Reintentos automáticos en caso de error
+        -p, --preview    Previsualiza los cambios sin realizar la copia
+        -d, --delete     Elimina archivos en destino que no existen en origen
+        -v, --verbose    Muestra información detallada
+        -f, --fast       Modo rápido (útil para red local)
+        -c, --checksum   Verifica la integridad de los archivos
+        -i, --ignore     Ignora archivos temporales y caché
+        -s, --smart      Modo inteligente (auto-detecta mejor configuración)
+        -z, --zip        Comprime durante la transferencia
+        -l, --log        Guarda log de la operación
+        -b, --bandwidth RATE  Limita el ancho de banda (ej: 1M, 500K)
+        -r, --retry      Reintentos automáticos en caso de error
 
     Ejemplos:
-      backup ~/Documentos /media/backup -s
-      backup . /backup -pdv
-      backup ~/Proyectos usuario@servidor:/backup -c
-      backup archivo.iso /backup -fz
+        backup ~/Documentos /media/backup -s
+        backup . /backup -pdv
+        backup ~/Proyectos usuario@servidor:/backup -c
+        backup archivo.iso /backup -fz
     "
 
     # Verificar que rsync está instalado
