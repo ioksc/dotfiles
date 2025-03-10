@@ -7,6 +7,12 @@ fi
 
 dbus-update-activation-environment --systemd --all
 
+# Iniciar xdg-desktop-portal y su backend
+/usr/lib/xdg-desktop-portal &
+sleep 1
+/usr/lib/xdg-desktop-portal-gtk &
+
+# Configuración de xbindkeys
 pgrep -x xbindkeys > /dev/null || xbindkeys &
 pgrep -x nm-applet > /dev/null || nm-applet --indicator &
 pgrep -x dunst > /dev/null || dunst &
