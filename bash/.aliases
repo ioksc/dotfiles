@@ -1,85 +1,77 @@
 # ========================
-# 🌎 MIRRORS USA OPTIMIZADOS
+# MIRRORS OPTIMIZADOS
 # ========================
-alias mirror_speed='sudo reflector \
-    --protocol https \
-    --country "US,CA,MX" \
-    --latest 50 \
-    --sort rate \
-    --fastest 10 \
-    --download-timeout 5 \
-    --save /etc/pacman.d/mirrorlist \
-    && echo "🚀 Espejos más rápidos configurados"'
 
-alias mirror_fast='sudo reflector \
-    --protocol https \
-    --country "US,CA" \
-    --latest 30 \
-    --sort delay \
-    --connection-timeout 2 \
-    --save /etc/pacman.d/mirrorlist \
-    && echo "📡 Espejos de baja latencia"'
-
-alias mirror_score='sudo reflector \
-    --protocol https \
-    --country "US,CA,MX" \
-    --latest 50 \
-    --sort score \
-    --save /etc/pacman.d/mirrorlist \
-    && echo "🏆 Espejos mejor calificados"'
-
-# ========================
-# 🚀 GESTIÓN DE PAQUETES
-# ========================
-# Actualización completa
-sys_update() {
-    mirror_speed \
-    && paru -Syyu \
-    && echo "✅ Sistema actualizado" \
-    && paru -Sc --noconfirm \
-    && echo "🧹 Caché limpiada"
+_mirror() {
+    local sort="$1" desc="$2"
+    sudo reflector --protocol https --latest 50 --sort "$sort" --save /etc/pacman.d/mirrorlist \
+        && echo "🌠 $desc"
 }
 
-# Búsqueda e instalación interactiva
-pkg() {
-    cache_file=~/.cache/paru_pkglist
-    if [[ ! -f $cache_file || $(find "$cache_file" -mtime +1 -print) ]]; then
-        paru -Slq | tee "$cache_file"
-    fi
-    cat "$cache_file" | \
-    fzf --multi --preview 'paru -Si {1}' --preview-window=wrap | \
-    xargs -ro paru -S
-}
+alias mirror_speed='_mirror rate "Espejos más rápidos configurados"'
+alias mirror_fast='_mirror delay "Espejos de baja latencia"'
+alias mirror_score='_mirror score "Espejos mejor calificados"'
 
 # ========================
-# 📁 ARCHIVOS Y DIRECTORIOS
+# ARCHIVOS Y DIRECTORIOS
 # ========================
-alias ls='eza --icons --group-directories-first --git-ignore'
-alias ll='eza -a --icons --group-directories-first --color-scale'
+alias ls='eza --icons --group-directories-first'
+alias ll='eza -al --icons --group-directories-first --color-scale'
 alias lt='eza -aT --icons --level=2'
 
+# ========================
+# UTILIDADES ESENCIALES
+# ========================
+alias unlockdb='sudo rm -f /var/lib/pacman/db.lck && echo "🔓 Lock removido"'
+alias jctl='journalctl -p 3 -xb -n 25'
+alias grub-update='sudo grub-mkconfig -o /boot/grub/grub.cfg && echo "GRUB actualizado"'
+alias reload='exec $SHELL -l'
+alias duf='duf -theme dark'
+alias top='htop'
 
 # ========================
-# ⚡️ UTILIDADES ESENCIALES
-# ========================
-alias unlockdb='sudo rm /var/lib/pacman/db.lck 2>/dev/null && echo "🔓 Lock removido"'
-alias jctl='journalctl -p 3 -xb -n 25'      # Últimos 25 errores
-alias grub-update='sudo grub-mkconfig -o /boot/grub/grub.cfg && echo "🍔 GRUB actualizado"'
-alias reload="exec $SHELL -l"
-
-# ========================
-# 🔒 SEGURIDAD
+# SEGURIDAD
 # ========================
 alias rm='rm -iv'
 alias mv='mv -i'
 alias cp='cp -i'
+alias chmod='chmod --verbose'
+alias chown='chown --verbose'
+alias mcd='mkdircd() { mkdir -p "$1" && cd "$1"; }; mkdircd'
 
 # ========================
-# 💻 DESARROLLO
+# DESARROLLO - GIT
 # ========================
 alias gs='git status'
 alias ga='git add'
 alias gc='git commit -m'
 alias gp='git push'
 alias glc='git log --graph --abbrev-commit --oneline --decorate --all'
+alias gd='git diff'                    # Ver diferencias
+alias gds='git diff --staged'          # Diferencias en staged
+alias gb='git branch'                  # Listar ramas
+alias gco='git checkout'               # Cambiar ramas
+alias gcb='git checkout -b'            # Crear y cambiar a nueva rama
+alias gm='git merge'                   # Combinar ramas
+alias gr='git rebase'                  # Rebasear
+alias gpl='git pull'                   # Pull con actualizaciones
+alias gcl='git clone'                  # Clonar repositorio
+alias grs='git reset --soft HEAD^'     # Deshacer último commit (manteniendo cambios)
+alias grh='git reset --hard'           # Reset duro
+alias grep='grep --color=auto'
 
+
+# ========================
+#  DOCKER
+# ========================
+alias docker-ps='docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"'
+alias docker-stop='docker stop $(docker ps -q)'  # Parar todos los contenedores
+alias docker-rm='docker rm $(docker ps -aq)'     # Eliminar contenedores parados
+alias docker-pull='docker pull'                  # Actualizar imágenes
+alias docker-logs='docker logs -f'               # Seguir logs en tiempo real
+
+# ========================
+#  Other useful aliases
+# ========================
+alias burpsuite='/home/ioksc/burp-launcher.sh &>/dev/null &'
+alias aleatorio='wal -i ~/Wallpapers/ &>/dev/null  && clear && fastfetch --config examples/14'
