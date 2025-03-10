@@ -3,19 +3,19 @@ color="#f2f2f2"
 separator_block_width=9
 markup=pango
 
-[window_title]
-command=xdotool getactivewindow getwindowname
-interval=1
-label=<span color="#268BD2"> </span>
-
-[openpvn]
-command=node ~/dotfiles/scripts/js/network_info.js | awk -F ': ' '{printf "<span color=\"#6C71C4\">%s</span> %s\n", $1, $2}'
-interval=30
-label=<span color="#6C71C4">  </span>
+# [window_title]
+# command=xdotool getactivewindow getwindowname
+# interval=1
+# label=<span color="#268BD2"> </span>
+#
+# [openpvn]
+# command=node ~/dotfiles/scripts/js/network_info.js | awk -F ': ' '{printf "<span color=\"#6C71C4\">%s</span> %s\n", $1, $2}'
+# interval=30
+# label=<span color="#6C71C4">  </span>
 
 
 [arch_update]
-command= ~/dotfiles/scripts/arch_updates.sh
+command= ~/dotfiles/scripts/new_arch_updates.sh
 interval=once
 label=<span color="#268BD2"> </span>
 
@@ -28,10 +28,10 @@ command=~/dotfiles/scripts/keyboard_layout.sh
 interval=once
 label=<span color="#2AA198">  </span>
 
-[root]
-command=df --output=avail / | tail -n 1 | numfmt --to=iec-i --from-unit=1024 --format="%.2f" | tr -d 'A-Za-z'
-interval=10
-label=<span color="#B58900"> </span>
+# [root]
+# command=df --output=avail / | tail -n 1 | numfmt --to=iec-i --from-unit=1024 --format="%.2f" | tr -d 'A-Za-z'
+# interval=10
+# label=<span color="#B58900"> </span>
 
 [cpu]
 command=mpstat 1 1 | awk '/all/ {print 100 - $12 "%"}'
@@ -48,8 +48,12 @@ command=TZ="Europe/Madrid" date '+%H:%M<span color="#2AA198">%Z</span>'
 interval=10
 label=<span color="#2AA198">󱑒 </span>
 
+[time_est]
+command=TZ=":America/La_Paz" date '+%H:%M<span color="#268BD2">%Z</span>'
+interval=10
+label=<span color="#268BD2">󱑒 </span>
 
-[date]
-command=date '+%d %b %Y'
-interval=3600
-label=<span color="#DC322F">󰸘 </span>
+# [date]
+# command=date '+%d %b %Y'
+# interval=3600
+# label=<span color="#DC322F">󰸘 </span>
