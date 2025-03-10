@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 
-# Colores para la salida
-declare -A COLORES=(
-    ["VERDE"]='\033[0;32m'
-    ["ROJO"]='\033[0;31m'
-    ["AMARILLO"]='\033[0;33m'
-    ["NC"]='\033[0m' # No Color
+# Configuración avanzada
+declare -A CONFIG=(
+    ["REFRESH_TIME"]=2
+    ["BORDER_COLOR"]="#5A7FFF"
+    ["HIGHLIGHT_COLOR"]="#00F3FF"
+    ["ACTIVE_COLOR"]="#00FF88"
+    ["INACTIVE_COLOR"]="#FF006E"
+    ["TEXT_COLOR"]="#FFFFFF"
+    ["WARNING_COLOR"]="#FFD700"
+    ["SPINNER_TYPE"]="moon"
 )
 
 declare -A SERVICIOS=(
@@ -16,75 +20,134 @@ declare -A SERVICIOS=(
     ["Nginx"]="nginx.service"
 )
 
-# Función para verificar si un servicio está activo
-esta_activo() {
-    systemctl is-active --quiet "$1"
-}
-
-# Función para mostrar el estado actual de los servicios
-mostrar_estado() {
-    gum style --border normal --margin "1" --padding "1 2" --border-foreground "#3be06e" \
-        "Hola, $USER! Bienvenido a $(gum style --foreground '#9ef01a' --bold 'Service Manager')."
-
-    for nombre in "${!SERVICIOS[@]}"; do
-        servicio=${SERVICIOS[$nombre]}
-        if esta_activo "$servicio"; then
-            gum log --structured --level none --prefix "Activo" --prefix.foreground "#9ef01a" "$nombre"
-        else
-            gum log --structured --level none --prefix "Inactivo" --prefix.foreground "#f9a602" "$nombre"
+# Función para verificar dependencias
+check_dependencies() {
+    local deps=("gum" "systemctl")
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &>/dev/null; then
+            gum style --foreground "#FF0000" "🚨 Error: Dependencia faltante - $dep"
+            exit 1
         fi
     done
 }
 
-# Función para gestionar servicios
-gestionar_servicios() {
-    local seleccion=("$@")
-    for servicio in "${seleccion[@]}"; do
-        nombre_sistema=${SERVICIOS[$servicio]}
-        accion=$(esta_activo "$nombre_sistema" && echo "Deteniendo" || echo "Iniciando")
-        comando=$(esta_activo "$nombre_sistema" && echo "stop" || echo "start")
+# Verificar estado del servicio
+service_status() {
+    systemctl is-active --quiet "$1" 2>/dev/null
+}
 
-        echo -n "$accion $servicio... "
-        echo
-        if sudo systemctl "$comando" "$nombre_sistema"; then
-            echo -e "${COLORES[VERDE]}[OK]${COLORES[NC]}"
+# Mostrar header con efecto neón
+neon_header() {
+    gum style --border double \
+        --margin "1" \
+        --padding "1 2" \
+        --border-foreground "${CONFIG[BORDER_COLOR]}" \
+        --foreground "${CONFIG[HIGHLIGHT_COLOR]}" \
+        "🛸 $(gum style --bold 'Service Manager PRO') • $(date +'%H:%M:%S') • 👤 $USER"
+}
+
+# Mostrar estado de servicios con iconos dinámicos
+display_services() {
+    local sorted_services
+    readarray -t sorted_services < <(printf '%s\n' "${!SERVICIOS[@]}" | sort)
+
+    for service in "${sorted_services[@]}"; do
+        local service_name="${SERVICIOS[$service]}"
+        if service_status "$service_name"; then
+            gum join --horizontal \
+                "$(gum style --padding "0 1" --foreground "${CONFIG[ACTIVE_COLOR]}" "🟢")" \
+                "$(gum style --padding "0 2" --foreground "${CONFIG[TEXT_COLOR]}" "$service")"
         else
-            echo -e "${COLORES[ROJO]}[FALLO]${COLORES[NC]}"
+            gum join --horizontal \
+                "$(gum style --padding "0 1" --foreground "${CONFIG[INACTIVE_COLOR]}" "🔴")" \
+                "$(gum style --padding "0 2" --foreground "${CONFIG[TEXT_COLOR]}" "$service")"
         fi
     done
 }
 
-# Función principal
+# Control de servicios con animación
+manage_services() {
+    local services=("$@")
+    local results=()
+
+    for service in "${services[@]}"; do
+        local target="${SERVICIOS[$service]}"
+
+        gum spin --spinner "${CONFIG[SPINNER_TYPE]}" \
+            --title.foreground "${CONFIG[HIGHLIGHT_COLOR]}" \
+            --title " Procesando $service..." -- \
+            bash -c "
+                if ! systemctl list-unit-files | grep -q '^${target}'; then
+                    exit 127
+                fi
+
+                if systemctl is-active --quiet '${target}'; then
+                    sudo systemctl stop '${target}'
+                else
+                    sudo systemctl start '${target}'
+                fi
+            " 2>/dev/null
+
+        case $? in
+            0)  results+=("$(gum style --foreground "${CONFIG[ACTIVE_COLOR]}" "✓ $service")") ;;
+            127) results+=("$(gum style --foreground "${CONFIG[WARNING_COLOR]}" "⚠ $service (No existe)")") ;;
+            *)  results+=("$(gum style --foreground "${CONFIG[INACTIVE_COLOR]}" "✗ $service")") ;;
+        esac
+    done
+
+    # Mostrar resultados
+    gum style --border rounded --margin "1" --padding "1 2" \
+        --border-foreground "${CONFIG[BORDER_COLOR]}" \
+        "📊 Resultados de la operación:" \
+        "$(gum join --vertical "${results[@]}")"
+}
+
+# Menú holográfico
+holographic_menu() {
+    gum choose --header.foreground "${CONFIG[HIGHLIGHT_COLOR]}" \
+        --cursor.foreground "${CONFIG[ACTIVE_COLOR]}" \
+        --item.foreground "${CONFIG[TEXT_COLOR]}" \
+        --selected.foreground "${CONFIG[HIGHLIGHT_COLOR]}" \
+        --limit=0 --no-limit \
+        --header " Seleccione servicios (Espacio para múltiples)" \
+        "${!SERVICIOS[@]}" "⭕ Recargar" "⏹️ Salir"
+}
+
+# Loop principal
 main() {
-    while true; do
+    check_dependencies
+    check_sudo
+
+    while :; do
         clear
-        mostrar_estado
+        neon_header
+        display_services
 
-        # shellcheck disable=SC2207
-        seleccion=($(gum choose --header="Services:" "${!SERVICIOS[@]}" --no-limit --cursor "* " \
-            --cursor-prefix "(•) " --selected-prefix "(x) " --unselected-prefix "( ) " \
-            --cursor.foreground 99 --selected.foreground 99))
+        IFS=$'\n' read -d '' -ra selection <<< "$(holographic_menu)"
 
-        if [ ${#seleccion[@]} -eq 0 ]; then
-            echo -e "${COLORES[AMARILLO]}No se seleccionó ningún servicio.${COLORES[NC]}"
-            if ! gum confirm "¿Deseas continuar?"; then
-                echo -e "${COLORES[VERDE]}Gracias por usar Service Manager. ¡Hasta luego!${COLORES[NC]}"
+        case "${selection[*]}" in
+            "⏹️ Salir")
+                gum style --foreground "${CONFIG[HIGHLIGHT_COLOR]}" "👋 ¡Hasta luego!"
                 exit 0
-            fi
-            continue
-        fi
-
-        if gum confirm "¿Confirmas gestionar los servicios: ${seleccion[*]}?"; then
-            echo
-            gestionar_servicios "${seleccion[@]}"
-            echo -e "${COLORES[VERDE]}Operación completada.${COLORES[NC]}"
-            sleep 2
-        else
-            echo -e "${COLORES[AMARILLO]}Operación cancelada.${COLORES[NC]}"
-            sleep 1
-        fi
+                ;;
+            "⭕ Recargar") continue ;;
+            *)
+                [ ${#selection[@]} -eq 0 ] && continue
+                if gum confirm --affirmative "Ejecutar" --negative "Cancelar" \
+                    --prompt.foreground "${CONFIG[TEXT_COLOR]}" \
+                    "$(gum style --foreground "${CONFIG[HIGHLIGHT_COLOR]}" "Confirmar:") $(printf '%s ' "${selection[@]}")"; then
+                    manage_services "${selection[@]}"
+                    sleep "${CONFIG[REFRESH_TIME]}"
+                else
+                    gum style --foreground "${CONFIG[WARNING_COLOR]}" "🚫 Operación cancelada"
+                    sleep 1
+                fi
+                ;;
+        esac
     done
 }
 
-# Ejecutar la función principal
+# Inicialización
+trap 'echo -e "\033[?25h"; exit 0' SIGINT
+echo -e "\033[?25l"
 main
