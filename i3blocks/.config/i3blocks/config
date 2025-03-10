@@ -43,13 +43,13 @@ command=~/dotfiles/scripts/volman.sh
 interval=1
 label=<span color="#D33682"></span>
 
-[time_madrid]
-command=TZ="Europe/Madrid" date '+%H:%M<span color="#2AA198">%Z</span>'
-interval=10
-label=<span color="#2AA198">󱑒 </span>
+# [time_madrid]
+# command=TZ="Europe/Madrid" date '+%H:%M<span color="#2AA198">%Z</span>'
+# interval=10
+# label=<span color="#2AA198">󱑒 </span>
 
-[time_est]
-command=TZ=":America/La_Paz" date '+%H:%M<span color="#268BD2">%Z</span>'
+[time_now]
+command=date '+%H:%M<span color="#268BD2">%Z</span>'
 interval=10
 label=<span color="#268BD2">󱑒 </span>
 
