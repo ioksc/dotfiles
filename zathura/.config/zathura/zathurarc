@@ -8,32 +8,35 @@ set adjust-open "fit-page"
 set pages-per-row 1
 set scroll-page-aware "true"
 set scroll-full-overlap 0.01
-set scroll-step 30
+set scroll-step 20
 
 # Window settings
 set window-title-home-tilde 1
 set statusbar-home-tilde 1
 set window-title-basename 1
+set guioptions "none"
 
 # Zoom settings
 set zoom-min 10
 set zoom-max 300
-set guioptions 1
 
-# Enable synctex support for LaTeX documents (if applicable)
+# Synctex
 set synctex true
 
-# Adjust scrolling speed
-set scroll-step 20
-
-# set database
+# Database
 set database sqlite
 
+# Clipboard
 set selection-clipboard clipboard
 
-# Font and color settings
-set font "Iosevka Nerd Font 10"
+# Rendering
+set render-loading true
+set recolor "false"
 
+# Font
+set font "JetBrainsMono NF 10"
+
+# Color scheme (Tokyo Night)
 set notification-error-bg "#f7768e"
 set notification-error-fg "#c0caf5"
 set notification-warning-bg "#e0af68"
@@ -58,10 +61,8 @@ set highlight-color "#e0af68"
 set highlight-active-color "#9ece6a"
 set default-bg "#24283b"
 set default-fg "#c0caf5"
-set render-loading true
 set render-loading-fg "#24283b"
 set render-loading-bg "#c0caf5"
-#
-# <C-r> to switch modes
 set recolor-lightcolor "#24283b"
 set recolor-darkcolor "#c0caf5"
+
