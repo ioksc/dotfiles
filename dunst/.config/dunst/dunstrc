@@ -1,0 +1,163 @@
+# Modern style Dunst Configuration
+# Optimized version - Clean and functional
+
+[global]
+    ### Display ###
+    monitor = 0
+    follow = mouse
+
+    ### Geometry ###
+    width = (320, 400)
+    height = (80, 200)
+    origin = top-right
+    offset = (15, 45)
+    scale = 0
+    notification_limit = 5
+
+    ### Progress bar ###
+    progress_bar = true
+    progress_bar_height = 8
+    progress_bar_frame_width = 0
+    progress_bar_min_width = 150
+    progress_bar_max_width = 350
+    progress_bar_corner_radius = 4
+    progress_bar_corners = all
+
+    ### Style ###
+    corner_radius = 12
+    corners = all
+    frame_width = 0
+    frame_color = "#00000000"
+    gap_size = 8
+    separator_height = 0
+    separator_color = "auto"
+    background = "#1e1e2eE6"
+    transparency = 0
+    padding = 16
+    horizontal_padding = 16
+    text_icon_padding = 16
+
+    ### Icons ###
+    icon_corner_radius = 8
+    icon_corners = all
+    enable_recursive_icon_lookup = true
+    icon_theme = "Papirus"
+    icon_position = left
+    min_icon_size = 48
+    max_icon_size = 64
+
+    ### Text ###
+    font = "Inter, Cantarell, SF Pro Display 11"
+    line_height = 4
+    markup = full
+    format = "<b>%s</b>\n<span size='small' alpha='75%%'>%b</span>"
+    alignment = left
+    vertical_alignment = center
+    ellipsize = end
+    ignore_newline = no
+    stack_duplicates = true
+    hide_duplicate_count = true
+    show_indicators = false
+    show_age_threshold = -1
+
+    ### Behavior ###
+    sort = update
+    indicate_hidden = yes
+    sticky_history = yes
+    history_length = 50
+    idle_threshold = 120
+
+    ### Interaction ###
+    mouse_left_click = close_current
+    mouse_middle_click = do_action, close_current
+    mouse_right_click = context_all
+
+    ### Applications ###
+    browser = /usr/bin/xdg-open
+    dmenu = /usr/bin/rofi -dmenu -p "dunst:"
+    always_run_script = true
+
+    ### Window ###
+    title = "Notifications"
+    class = "Dunst"
+
+    ### Wayland/X11 ###
+    force_xwayland = false
+    ignore_dbusclose = false
+
+[experimental]
+    per_monitor_dpi = false
+
+### Urgency Styles ###
+
+[urgency_low]
+    background = "#1e1e2eE6"
+    foreground = "#cdd6f4"
+    highlight = "#89b4fa"
+    timeout = 8
+    frame_color = "#313244"
+
+[urgency_normal]
+    background = "#1e1e2eE6"
+    foreground = "#cdd6f4"
+    highlight = "#89b4fa"
+    timeout = 10
+    override_pause_level = 30
+    frame_color = "#313244"
+
+[urgency_critical]
+    background = "#1e1e2eE6"
+    foreground = "#f38ba8"
+    highlight = "#f38ba8"
+    timeout = 30
+    override_pause_level = 60
+    frame_color = "#f38ba8"
+
+### Custom Rules ###
+
+# Volume notifications
+[volume]
+    appname = "*volume*"
+    set_stack_tag = "volume"
+    timeout = 2
+
+# Brightness notifications
+[brightness]
+    appname = "*brightness*"
+    set_stack_tag = "brightness"
+    timeout = 2
+
+# Music/Media
+[music]
+    appname = "(Spotify|playerctl)"
+    timeout = 5
+
+# System updates
+[updates]
+    appname = "pacman"
+    urgency = normal
+    timeout = 15
+
+# Low battery
+[battery_low]
+    appname = "*battery*"
+    body = "*low*"
+    urgency = critical
+    timeout = 30
+
+# Email
+[email]
+    appname = "thunderbird"
+    urgency = normal
+    timeout = 12
+
+# Messaging apps
+[messaging]
+    appname = "(telegram|discord)"
+    urgency = normal
+    timeout = 8
+
+# Hide spam notifications
+[ignore_spam]
+    body = "*has (joined|left)*"
+    skip_display = true
