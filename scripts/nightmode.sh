@@ -1,36 +1,53 @@
 #!/bin/bash
+#
+# Script para alternar Redshift/Gammastep, optimizado para i3blocks.
+# Detecta automáticamente la herramienta disponible y gestiona su estado.
 
-# Archivo de estado
-STATE_FILE="$HOME/.redshift_state"
+# --- Configuración ---
+readonly TEMP_ON="3500K"   # Temperatura de color para la noche
+readonly ICON_ON=""      # Icono cuando está activo (luna)
+readonly ICON_OFF=" "     # Icono cuando está inactivo (sol)
 
-# Iconos
-ICON_ON=""
-ICON_OFF=" "
+# --- Detección de Herramienta ---
+# Comprueba si 'gammastep' o 'redshift' están instalados y elige uno.
+if command -v gammastep >/dev/null 2>&1; then
+    GAMMA_TOOL="gammastep"
+elif command -v redshift >/dev/null 2>&1; then
+    GAMMA_TOOL="redshift"
+else
+    # Si no se encuentra ninguno, muestra un error y sale.
+    echo "Error: Ni redshift ni gammastep están instalados." >&2
+    exit 1
+fi
 
-# Función para alternar el estado
-toggle_redshift() {
-    if [[ -f "$STATE_FILE" && $(cat "$STATE_FILE") == "on" ]]; then
-        redshift -x &> /dev/null
-        echo "off" > "$STATE_FILE"
-        echo "$ICON_OFF"
+# --- Lógica ---
+
+# Verifica si la herramienta de gamma está en ejecución.
+is_running() {
+    pgrep -x "$GAMMA_TOOL" > /dev/null
+}
+
+# Alterna el estado de la herramienta.
+toggle_state() {
+    if is_running; then
+        # Si está activo, lo desactivamos.
+        pkill -x "$GAMMA_TOOL"
     else
-        redshift -PO 3600K &> /dev/null
-        echo "on" > "$STATE_FILE"
-        echo "$ICON_ON"
+        # Si no, lo activamos, forzando el método 'randr' para X11.
+        "$GAMMA_TOOL" -m randr -PO "$TEMP_ON" >/dev/null 2>&1 &
     fi
 }
 
-# Mostrar el estado actual (para i3blocks)
-if [[ -z "$BLOCK_BUTTON" ]]; then
-    if [[ -f "$STATE_FILE" && $(cat "$STATE_FILE") == "on" ]]; then
-        echo "$ICON_ON"
-    else
-        echo "$ICON_OFF"
-    fi
-    exit 0
+# --- Integración con i3blocks ---
+
+# Si se hace clic izquierdo (botón 1), alternamos el estado.
+if [[ "$BLOCK_BUTTON" == "1" ]]; then
+    toggle_state
 fi
 
-# Manejar el click (botón izquierdo)
-if [[ "$BLOCK_BUTTON" -eq 1 ]]; then
-    toggle_redshift
+# Muestra siempre el icono correspondiente al estado actual.
+if is_running; then
+    echo "$ICON_ON"
+else
+    echo "$ICON_OFF"
 fi
