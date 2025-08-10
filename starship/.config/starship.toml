@@ -1,165 +1,133 @@
-format = """\
-[╭╴](fg:arrow)\
-$username\
-$os\
-$git_branch\
-(\
-    at \
-    $directory\
-)\
+format = """
+$hostname\
+$directory\
+$git_branch$git_status\
+$docker_context\
+$python$nodejs$golang$rust\
+$shell\
+$battery\
 $cmd_duration\
-(\
-    via \
-    $python\
-    $conda\
-    $nodejs\
-    $c\
-    $rust\
-    $java\
-)
-[╰─](fg:arrow)$character\
-"""
-# Add the modules you need
+$line_break\
+$character"""
 
-# Disable the blank line at the start of the prompt
-add_newline = true
+add_newline = false
+palette = 'onedark'
 
-
-palette = "normal"
-
-
-
-[palettes.normal]
-# Base colors
-arrow = "#586E75"            # Dark base color for arrows
-os = "#29EEDF"               # Bright cyan for OS
-os_admin = "#FFE999"         # Soft yellow for admin
-directory = "#AADCFF"        # Soft blue for directory
-time = "#B9FFFA"             # Very soft cyan for time
-text_color = "#EEE8D5"       # Soft base light color
-text_light = "#00141A"       # Dark base color
-node = "#D6FFAC"             # Soft green for Node.js
-python = "#BAFB00"           # Bright green for Python
-conda = "#859900"            # Muted green for Conda
-java = "#FF9D9B"             # Soft red for Java
-rust = "#FFE999"             # Soft yellow for Rust
-clang = "#AADCFF"            # Soft blue for C/C++
-git = "#F8520E"              # Orange for git
-git_status = "#9EACAD"       # Soft grey for git status
-duration = "#F6524F"         # Bright red for duration
-
-
-[username]
-style_user = 'bold os'
-style_root = 'bold os_admin'
-format = '[  $user](fg:$style) '
-disabled = false
-show_always = true
-
-[os]
-format = "on [($name)]($style) "
-style = "bold blue"
-disabled = true
-
-[os.symbols]
-Alpine = " "
-Arch = " "
-Debian = " "
-EndeavourOS = " "
-Fedora = " "
-Linux = " "
-Macos = " "
-Manjaro = " "
-Mint = " "
-NixOS = " "
-openSUSE = " "
-Pop = " "
-SUSE = " "
-Ubuntu = " "
-Windows = " "
-
-[character]
-success_symbol = "[󰍟](fg:arrow)"
-error_symbol = "[󰍟](fg:red)"
-
+# ░░░ DIRECTORIO
 [directory]
-format = "[$path](bold $style)[$read_only]($read_only_style) "
-truncation_length = 2
-style = "fg:directory"
-read_only_style = "fg:directory"
-before_repo_root_style = "fg:directory"
-truncation_symbol = "…/"
-truncate_to_repo = true
-read_only ="  "
+style = 'bold fg:cyan'
+format = '[󰣇 $path]($style) '
+truncation_length = 3
+truncation_symbol = '…/'
 
-[time]
-disabled = true
-format = "at [󱑈 $time]($style)"
-time_format = "%H:%M"
-style = "bold fg:time"
+[directory.substitutions]
+'Documents'  = '󰈙 '
+'Downloads'  = ' '
+'Descargas'  = ' '
+'Music'      = ' '
+'Pictures'   = ' '
+'Workspace'  = ' '
 
-[cmd_duration]
-format = "took [ $duration]($style) "
-style = "bold fg:duration"
-min_time = 500
-
+# ░░░ GIT
 [git_branch]
-format = "via [$symbol$branch]($style) "
-style = "bold fg:git"
-symbol = " "
+symbol = ' '
+style = 'fg:green'
+format = '[$symbol$branch]($style) '
 
 [git_status]
-format = '[ $all_status$ahead_behind ]($style)'
-style = "fg:text_color bg:git"
-disabled = true
+style = 'fg:red'
+format = '([$all_status$ahead_behind]($style)) '
 
-[docker_context]
-symbol = " "
-
-[package]
-disabled=true
-
-[fill]
-symbol = " "
-
-[nodejs]
-format = "[ $symbol$version ]($style)"
-style = "bg:node fg:text_light"
-symbol = " "
-version_format = "${raw}"
-disabled=false
-
+# ░░░ PYTHON
 [python]
-disabled=false
-format = '[ ${symbol}${pyenv_prefix}(${version})( \($virtualenv\)) ]($style)'
-symbol = " "
-version_format = "${raw}"
-style = "bg:python fg:text_light"
+symbol = ' '
+style = 'fg:yellow'
+format = '[${symbol}${version} ($virtualenv)]($style) '
+pyenv_version_name = true
 
-[conda]
-format = "[ $symbol$environment ]($style)"
-style = "bg:conda fg:text_light"
-ignore_base = false
-disabled = false
-symbol = " "
+# ░░░ NODE
+[nodejs]
+symbol = ' '
+style = 'fg:green'
+format = '[${symbol}${version}]($style) '
 
-[java]
-format = "[ $symbol$version ]($style)"
-style = "bg:java fg:text_light"
-version_format = "${raw}"
-symbol = " "
-disabled = true
+# ░░░ GOLANG
+[golang]
+symbol = ' '
+style = 'fg:cyan'
+format = '[${symbol}${version}]($style) '
 
-[c]
-format = "[ $symbol($version(-$name)) ]($style)"
-style = "bg:clang fg:text_light"
-symbol = " "
-version_format = "${raw}"
-disabled=false
-
+# ░░░ RUST
 [rust]
-format ="[ $symbol$version ]($style)"
-style = "bg:rust fg:text_light"
-symbol = " "
-version_format = "${raw}"
-disabled=true
+symbol = ' '
+style = 'fg:red'
+format = '[${symbol}${version}]($style) '
+
+# ░░░ DOCKER
+[docker_context]
+disabled = true
+symbol = ' '
+style = 'fg:blue'
+format = '[in $symbol$context]($style) '
+detect_files = ['docker-compose.yml', 'docker-compose.yaml', 'Dockerfile']
+
+
+# ░░░ SHELL
+[shell]
+disabled = true
+style = 'fg:purple'
+format = '[  $indicator]($style) '
+
+# ░░░ HOSTNAME (útil para SSH o WSL)
+[hostname]
+ssh_only = true
+style = 'fg:pink'
+format = '[󰒋 $hostname]($style) '
+
+# ░░░ CONTAINER
+[container]
+format = '[📦 $name]($style) '
+style = 'fg:orange'
+only_with_env = true
+
+# ░░░ DURACIÓN
+[cmd_duration]
+min_time = 300
+style = 'fg:gray'
+format = '⏱ [$duration]($style) '
+
+# ░░░ BATERÍA
+[battery]
+full_symbol = '🔋'
+charging_symbol = '⚡'
+discharging_symbol = '🔌'
+format = '[$symbol$percentage]($style) '
+style = 'fg:yellow'
+
+# ░░░ HORA
+[time]
+disabled = false
+time_format = '%H:%M'
+style = 'fg:gray'
+format = ' [$time]($style) '
+
+# ░░░ CARÁCTER
+[character]
+success_symbol = '[❯](bold fg:green)'
+error_symbol = '[❯](bold fg:red)'
+vicmd_symbol = '[❮](bold fg:blue)'
+
+[palettes.onedark]
+fg         = '#abb2bf'
+bg         = '#282c34'
+black      = '#1e222a'
+red        = '#e06c75'
+green      = '#98c379'
+yellow     = '#e5c07b'
+blue       = '#61afef'
+magenta    = '#c678dd'
+cyan       = '#56b6c2'
+white      = '#dcdfe4'
+gray       = '#5c6370'
+orange     = '#d19a66'
+
