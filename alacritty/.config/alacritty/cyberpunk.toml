@@ -1,0 +1,56 @@
+# Tema Cyberpunk para Alacritty
+
+# Colores principales
+[colors.primary]
+background = '#0a0a12'      
+foreground = '#e0e0f0'     
+dim_foreground = '#a0a0b0'  
+bright_foreground = '#ffffff'
+
+# Colores del cursor
+[colors.cursor]
+cursor = '#ff00ff' 
+text = '#0a0a12'   
+
+# Colores de hints
+[colors.hints]
+start = { foreground = '#ffffff', background = '#ff0055' }  # Inicio de hint (neón rojo)
+end = { foreground = '#00ffff', background = '#222244' }    # Fin de hint (cyan sobre azul)
+
+# Colores de selección
+[colors.selection]
+text = '#000000'            # Negro en selección
+background = '#00ffff'      # Cyan brillante como fondo de selección
+
+# Colores normales
+[colors.normal]
+black = '#111122'
+red = '#ff2244'            # Rojo intenso
+green = '#00ff88'          # Verde neón
+yellow = '#ffff00'         # Amarillo brillante
+blue = '#0066ff'           # Azul eléctrico
+magenta = '#ff00ff'        # Magenta neón
+cyan = '#00ffff'           # Cyan brillante
+white = '#d0d0e0'          # Blanco suave
+
+# Colores brillantes
+[colors.bright]
+black = '#333344'
+red = '#ff5577'
+green = '#55ffa8'
+yellow = '#ffff55'
+blue = '#5599ff'
+magenta = '#ff55ff'
+cyan = '#55ffff'
+white = '#ffffff'
+
+# Colores atenuados (dim)
+[colors.dim]
+black = '#050510'
+red = '#661122'
+green = '#005533'
+yellow = '#444400'
+blue = '#002266'
+magenta = '#660066'
+cyan = '#005555'
+white = '#8888aa'
