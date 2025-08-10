@@ -1,376 +1,352 @@
+# Funciones mejoradas de bashrc
+ranger() {
+    local tempfile
+    tempfile=$(mktemp) || return 1
+
+    trap "rm -f '$tempfile'" EXIT INT TERM
+    command ranger --choosedir="$tempfile" "${@:-$PWD}"
+    if [[ -s "$tempfile" ]]; then
+        local dir
+        dir=$(<"$tempfile")
+
+        [[ "$dir" != "$PWD" ]] && cd "$dir"
+    fi
+
+    trap - EXIT INT TERM
+}
+# 📦 pkg: Busca e instala paquetes de AUR con fzf y caché
 pkg() {
-    cache_file=~/.cache/paru_pkglist
-    [[ ! -f "$cache_file" || $(find "$cache_file" -mtime +1) ]] && paru -Slq > "$cache_file"
-    fzf --multi --preview 'paru -Si {}' --preview-window=wrap < "$cache_file" | xargs -ro paru -S
+    local cache_file="$HOME/.cache/paru_pkglist"
+    local cache_time=86400 # 24 horas en segundos
+
+    # Crear directorio de caché si no existe
+    mkdir -p "$(dirname "$cache_file")"
+
+    # Verificar si el archivo de caché no existe o es antiguo (más de 24 horas)
+    if [[ ! -f "$cache_file" || $(( $(date +%s) - $(stat -c %Y "$cache_file") )) -gt "$cache_time" ]]; then
+        _info "Actualizando lista de paquetes de AUR..."
+        if ! paru -Slq > "$cache_file"; then
+            _error "Error al actualizar la lista de paquetes."
+            return 1
+        fi
+        _success "Lista de paquetes de AUR actualizada."
+    fi
+
+    fzf --multi \
+        --preview 'paru -Si {}' \
+        --preview-window=wrap \
+        --prompt='Buscar paquetes AUR > ' \
+        --bind 'ctrl-a:select-all,ctrl-d:deselect-all' \
+        --header "Usa Ctrl-a para seleccionar todo, Ctrl-d para deseleccionar todo" < "$cache_file" |
+    xargs -ro paru -S
 }
 
+# 📌 tm: Gestiona sesiones de tmux con facilidad
 tm() {
-    [[ -n "$TMUX" ]] && change="switch-client" || change="attach-session"
-    if [ $1 ]; then
-        tmux $change -t "$1" 2>/dev/null || (tmux new-session -d -s $1 && tmux $change -t "$1"); return
+    local session_name="$1"
+    local change_cmd="attach-session"
+
+    # Determinar si estamos dentro de una sesión tmux
+    [[ -n "$TMUX" ]] && change_cmd="switch-client"
+
+    # Si se proporciona un nombre de sesión
+    if [[ -n "$session_name" ]]; then
+        # Intentar conectar a la sesión existente o crear una nueva
+        tmux $change_cmd -t "$session_name" 2>/dev/null ||
+            { tmux new-session -d -s "$session_name" && tmux $change_cmd -t "$session_name"; }
+        return 0
     fi
 
-    session=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | fzf --exit-0) &&
-    tmux $change -t "$session" || tmux new-session
+    # Si no se proporciona nombre, mostrar selector con fzf
+    local session
+    session=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | fzf --exit-0 --prompt='Sesiones tmux > ')
+
+    # Conectar a la sesión seleccionada o crear una nueva
+    if [[ -n "$session" ]]; then
+        tmux $change_cmd -t "$session"
+    else
+        tmux new-session
+    fi
 }
 
-# Función para matar sesiones de tmux con fzf
+# tmk: Mata sesiones de tmux con fzf
 tmk() {
+    # Listar y permitir selección múltiple de sesiones
     local sessions
-    sessions="$(tmux ls | fzf --multi --reverse --preview 'tmux capture-pane -pt {1}' | cut -d: -f1)"
+    sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null |
+            fzf --multi \
+                --reverse \
+                --prompt='Matar sesión(es) tmux > ' \
+                --preview 'tmux capture-pane -pt {} -S -30' \
+                --preview-window=wrap,right,70% \
+                --header "Selecciona las sesiones a matar (Multi-selección con TAB)")
+
+    # Matar las sesiones seleccionadas
     if [[ -n "$sessions" ]]; then
-        echo "$sessions" | xargs -I {} tmux kill-session -t {}
+        echo "$sessions" | xargs -I {} tmux kill-session -t {} &&
+            _success "Sesión(es) tmux eliminada(s)."
+    else
+        _info "No se seleccionaron sesiones para matar."
     fi
 }
 
+# y: Navegador de archivos Yazi con integración cd
 y() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-	yazi "$@" --cwd-file="$tmp"
-	if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
-		builtin cd -- "$cwd"
-	fi
-	rm -f -- "$tmp"
+    local tmp_file="$(mktemp -t "yazi-cwd.XXXXXX")"
+    yazi "$@" --cwd-file="$tmp_file"
+
+    local cwd="$(cat "$tmp_file")"
+    if [[ -n "$cwd" && "$cwd" != "$PWD" ]]; then
+        builtin cd -- "$cwd"
+    fi
+    rm -f -- "$tmp_file" &>/dev/null
 }
 
-# Funciones de compresión
-readonly _R='\033[0;31m' _G='\033[0;32m' _B='\033[0;34m' _Y='\033[1;33m' _N='\033[0m'
-readonly _OK='✅' _ERR='❌' _INFO='ℹ️' _ZIP='📦' _WARN='⚠️'
 
-# Mensajes
-_msg() { echo -e "${2}${1}${_N}"; }
-_error() { _msg "${_ERR} $1" "${_R}" >&2; }
-_success() { _msg "${_OK} $1" "${_G}"; }
-_info() { _msg "${_INFO} $1" "${_B}"; }
+# ==============================================================================
+# Funciones de Backup (rsync)
+# ==============================================================================
 
-# Verificar dependencias
-_check_deps() {
-    local -a missing
-    for dep in tar unzip gzip bzip2 xz 7z unrar; do
-        command -v "$dep" >/dev/null 2>&1 || missing+=("$dep")
-    done
-
-    if ((${#missing[@]})); then
-        _error "Falta instalar: ${missing[*]}"
-        _info "Instalar con: sudo pacman -S ${missing[*]}"
+_rsync_check() {
+    if ! command -v rsync &>/dev/null; then
+        _error "rsync no está instalado. Por favor, instálalo."
         return 1
     fi
+    return 0
 }
 
-# 📤 Extraer archivos
-extract() {
-    local usage="
-    ${_ZIP} ${_Y}Uso:${_N} extract <archivo> [destino]
+_backup_usage() {
+    cat <<EOF
+${_ZIP} ${_Y}Uso: backup <origen> <destino> [opciones]${_N}
 
-    ${_INFO} Formatos: tar.bz2, tar.gz, tar.xz, zip, rar, 7z"
+Opciones:
+    -p, --preview    Previsualiza los cambios sin realizar la copia
+    -d, --delete     Elimina archivos en destino que no existen en origen
+    -v, --verbose    Muestra información detallada
+    -f, --fast       Modo rápido (útil para red local)
+    -c, --checksum   Verifica la integridad de los archivos
+    -i, --ignore     Ignora archivos temporales y caché
+    -s, --smart      Modo inteligente (auto-detecta mejor configuración)
+    -z, --zip        Comprime durante la transferencia
+    -l, --log        Guarda log de la operación
+    -b, --bandwidth RATE  Limita el ancho de banda (ej: 1M, 500K)
+    -r, --retry      Reintentos automáticos en caso de error
 
-    [[ -z "$1" ]] && { echo -e "$usage"; return 1; }
-    _check_deps || return 1
-
-    local file="$1" dest="${2:-.}"
-    [[ ! -f "$file" ]] && { _error "No existe: $file"; return 1; }
-
-    mkdir -p "$dest" && cd "$dest" || { _error "Error accediendo a: $dest"; return 1; }
-
-    case "${file,,}" in
-        *.tar.bz2|*.tbz2) tar -xjf "$file" ;;
-        *.tar.gz|*.tgz)   tar -xzf "$file" ;;
-        *.tar.xz|*.txz)   tar -xJf "$file" ;;
-        *.zip)            unzip "$file"    ;;
-        *.rar)            unrar x "$file"  ;;
-        *.7z)             7z x "$file"     ;;
-        *) _error "Formato desconocido: $file"; return 1 ;;
-    esac
-
-    (($? == 0)) && _success "Extraído en: $dest" || _error "Error al extraer"
+Ejemplos:
+    backup ~/Documentos /media/backup -s
+    backup . /backup -pdv
+    backup ~/Proyectos usuario@servidor:/backup -c
+    backup archivo.iso /backup -fz
+EOF
 }
-
-# Comprimir archivos
-compress() {
-    local usage="
-    ${_ZIP} ${_Y}Uso:${_N} compress <archivo/directorio> <formato> [nombre]
-
-    ${_INFO} Formatos:
-        • zip    📦 (compatible)
-        • tar.gz 🚀 (rápido)
-        • tar.bz2 🗜️ (compresión alta)
-        • tar.xz 💎 (mejor compresión)
-        • 7z     🎯 (versátil)"
-
-    [[ -z "$1" || -z "$2" ]] && { echo -e "$usage"; return 1; }
-    _check_deps || return 1
-
-    local src="$1" fmt="$2" out="${3:-$1}"
-    [[ ! -e "$src" ]] && { _error "No existe: $src"; return 1; }
-
-    local cmd size_before size_after tmp_err
-    size_before=$(du -sh "$src" | cut -f1)
-
-    case "$fmt" in
-        zip)     cmd="zip -r"    ; fmt_name="ZIP" ;;
-        tar.gz)  cmd="tar -czf"  ; fmt_name="GZIP" ;;
-        tar.bz2) cmd="tar -cjf"  ; fmt_name="BZIP2" ;;
-        tar.xz)  cmd="tar -cJf"  ; fmt_name="XZ" ;;
-        7z)      cmd="7z a"      ; fmt_name="7ZIP" ;;
-        *) _error "Formato desconocido: $fmt"; return 1 ;;
-    esac
-
-    _info "Comprimiendo con $fmt_name..."
-    tmp_err=$(mktemp)  # Archivo temporal para errores
-
-    # Desactiva mensajes de control de trabajos
-    set +m
-    $cmd "${out}.${fmt}" "$src" >/dev/null 2>"$tmp_err" &
-    local pid=$!
-
-    # Spinner
-    local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
-    local i=0
-    while kill -0 $pid 2>/dev/null; do
-        printf "\r${_B}%s${_N} Comprimiendo..." "${spin:$i:1}"
-        sleep 0.1
-        ((i = (i + 1) % 10))
-    done
-    printf "\r\033[K"  # Limpia la línea
-
-    wait $pid  # Captura el estado de salida
-    local status=$?
-    set -m  # Reactiva mensajes de control
-
-    if (($status == 0)); then
-        if [[ -e "${out}.${fmt}" ]]; then
-            size_after=$(du -sh "${out}.${fmt}" | cut -f1)
-            _success "Comprimido: ${out}.${fmt}"
-            _info "📊 Original: $size_before → Comprimido: $size_after"
-        else
-            _error "El archivo comprimido no se generó."
-            status=1
-        fi
-    else
-        _error "Error al comprimir. Detalles:"
-        cat "$tmp_err" >&2
-    fi
-
-    rm -f "$tmp_err"
-    return $status
-}
-
 
 
 backup() {
-    local HELP_TEXT="
-    📦 Uso: backup <origen> <destino> [opciones]
+    _rsync_check || return 1
 
-    Opciones:
-        -p, --preview    Previsualiza los cambios sin realizar la copia
-        -d, --delete     Elimina archivos en destino que no existen en origen
-        -v, --verbose    Muestra información detallada
-        -f, --fast       Modo rápido (útil para red local)
-        -c, --checksum   Verifica la integridad de los archivos
-        -i, --ignore     Ignora archivos temporales y caché
-        -s, --smart      Modo inteligente (auto-detecta mejor configuración)
-        -z, --zip        Comprime durante la transferencia
-        -l, --log        Guarda log de la operación
-        -b, --bandwidth RATE  Limita el ancho de banda (ej: 1M, 500K)
-        -r, --retry      Reintentos automáticos en caso de error
-
-    Ejemplos:
-        backup ~/Documentos /media/backup -s
-        backup . /backup -pdv
-        backup ~/Proyectos usuario@servidor:/backup -c
-        backup archivo.iso /backup -fz
-    "
-
-    # Verificar que rsync está instalado
-    if ! command -v rsync &>/dev/null; then
-        echo "❌ Error: rsync no está instalado"
-        return 1
-    fi
-
-    # Mostrar ayuda si no hay argumentos o se solicita ayuda
     if [[ "$#" -lt 2 || "$1" == "-h" || "$1" == "--help" ]]; then
-        echo "$HELP_TEXT"
+        _backup_usage
         return 1
     fi
 
     local src="$1"
     local dest="$2"
-    local is_local=false
+    shift 2
+    local options=()
     local bandwidth=""
     local log_file=""
-    local retry_opts=""
-    local base_opts=(
-        "--progress"      # Muestra progreso
-        "--human-readable" # Tamaños legibles
-        "--stats"         # Estadísticas al final
-        "--timeout=180"   # Timeout para conexiones lentas
-    )
-    local extra_opts=()
+    local dry_run=false
+    local delete=false
+    local verbose=false
+    local fast_mode=false
+    local checksum=false
+    local ignore_default=false
+    local smart_mode=false
+    local compress_mode=false
+    local retry_mode=false
 
-    # Verificar que el origen existe
-    if [[ ! -e "$src" ]]; then
-        echo "❌ Error: El origen '$src' no existe"
-        return 1
-    fi
-
-    # Detectar si es transferencia local
-    if [[ "$dest" != *":"* && "$src" != *":"* ]]; then
-        is_local=true
-        # Verificar que el destino existe o crear si es necesario
-        if [[ ! -d "$dest" ]]; then
-            mkdir -p "$dest" 2>/dev/null || {
-                echo "❌ Error: No se puede crear el directorio destino"
-                return 1
-            }
-        fi
-    fi
-
-    shift 2  # Mover a las opciones
-
-    # Procesar opciones
     while [[ "$#" -gt 0 ]]; do
         case "$1" in
-            -p|--preview)
-                extra_opts+=("--dry-run")
-                ;;
-            -d|--delete)
-                extra_opts+=("--delete" "--delete-excluded")
-                ;;
-            -v|--verbose)
-                extra_opts+=("--verbose" "--info=progress2")
-                ;;
-            -f|--fast)
-                if $is_local; then
-                    extra_opts+=("--whole-file")
-                else
-                    extra_opts+=("--compress")
-                fi
-                ;;
-            -c|--checksum)
-                extra_opts+=("--checksum")
-                ;;
-            -i|--ignore)
-                extra_opts+=(
-                    "--exclude='.git/*'"
-                    "--exclude='.cache/*'"
-                    "--exclude='node_modules/*'"
-                    "--exclude='*.tmp'"
-                    "--exclude='*.temp'"
-                    "--exclude='*.swp'"
-                    "--exclude='*~'"
-                    "--exclude='.DS_Store'"
-                    "--exclude='Thumbs.db'"
-                )
-                ;;
-            -s|--smart)
-                if $is_local; then
-                    extra_opts+=("--whole-file")
-                else
-                    extra_opts+=(
-                        "--compress"
-                        "--compress-level=6"
-                        "--partial"
-                        "--partial-dir=.rsync-partial"
-                    )
-                fi
-                extra_opts+=(
-                    "--exclude='.git/*'"
-                    "--exclude='.cache/*'"
-                    "--exclude='*.tmp'"
-                )
-                retry_opts="--timeout=180 --contimeout=60"
-                ;;
-            -z|--zip)
-                extra_opts+=("--compress" "--compress-level=9")
-                ;;
-            -l|--log)
-                log_file="/tmp/backup-$(date +%Y%m%d-%H%M%S).log"
-                ;;
+            -p|--preview)    dry_run=true; options+=("--dry-run"); shift ;;
+            -d|--delete)     delete=true;  options+=("--delete" "--delete-excluded"); shift ;;
+            -v|--verbose)    verbose=true; options+=("--verbose" "--info=progress2"); shift ;;
+            -f|--fast)       fast_mode=true; options+=("--whole-file"); shift ;;
+            -c|--checksum)   checksum=true; options+=("--checksum"); shift ;;
+            -i|--ignore)     ignore_default=true; shift ;;
+            -s|--smart)      smart_mode=true; shift ;;
+            -z|--zip)        compress_mode=true; options+=("--compress" "--compress-level=9"); shift ;;
+            -l|--log)        log_file="/tmp/backup-$(date +%Y%m%d-%H%M%S).log"; shift ;;
             -b|--bandwidth)
                 shift
-                if [[ -n "$1" ]]; then
-                    bandwidth="--bwlimit=$1"
-                    extra_opts+=("$bandwidth")
-                fi
+                bandwidth="--bwlimit=$1"
+                options+=("$bandwidth")
                 ;;
-            -r|--retry)
-                retry_opts="--timeout=180 --contimeout=60 --retry-connrefused --retry=3"
-                extra_opts+=($retry_opts)
-                ;;
+            -r|--retry)      retry_mode=true; options+=("--timeout=180" "--contimeout=60" "--retry-connrefused" "--retry=3"); shift ;;
             *)
-                echo "❌ Opción desconocida: $1"
-                echo "$HELP_TEXT"
+                _error "Opción desconocida: $1"
+                _backup_usage
                 return 1
                 ;;
         esac
-        shift
     done
 
-    # Configuración base según el tipo de transferencia
-    if $is_local; then
-        base_opts+=("--archive")  # Modo archivo para preservar atributos
-    else
-        base_opts+=(
-            "--archive"          # Modo archivo
-            "--partial"          # Mantener transferencias parciales
-            "--partial-dir=.rsync-partial"  # Directorio para archivos parciales
-            "--compress-level=6" # Compresión moderada por defecto
+
+    if [[ ! -e "$src" ]]; then
+        _error "Origen no encontrado: '$src'"
+        return 1
+    fi
+
+    local is_local=false
+    if [[ "$dest" != *":"* && "$src" != *":"* ]]; then
+        is_local=true
+        if [[ ! -d "$dest" ]]; then
+            mkdir -p "$dest" || { _error "No se pudo crear el destino: '$dest'"; return 1; }
+        fi
+    fi
+
+
+    local rsync_opts=(
+        "--archive"
+        "--progress"
+        "--human-readable"
+        "--stats"
+        "--timeout=300" # Timeout 5 minutos
+    )
+
+
+    if $smart_mode; then
+        rsync_opts+=(
+            "--compress"
+            "--compress-level=6"
+            "--partial"
+            "--partial-dir=.rsync-partial"
+        )
+        ignore_default=true # Smart mode implies ignore default
+    elif ! $is_local && ! $fast_mode && ! $compress_mode; then
+        rsync_opts+=("--compress" "--compress-level=6") # Compresión moderada por defecto en remoto/no-fast
+    fi
+
+
+    if $ignore_default; then
+        rsync_opts+=(
+            "--exclude='.git/*'"
+            "--exclude='.cache/*'"
+            "--exclude='node_modules/*'"
+            "--exclude='*.tmp'"
+            "--exclude='*.temp'"
+            "--exclude='*.swp'"
+            "--exclude='*~'"
+            "--exclude='.DS_Store'"
+            "--exclude='Thumbs.db'"
         )
     fi
 
-    # Preparar y ejecutar el comando
-    local cmd="rsync ${base_opts[*]} ${extra_opts[*]} \"$src\" \"$dest\""
 
-    # Mostrar información de la transferencia
-    echo "🚀 Iniciando transferencia..."
-    echo "📂 Origen: $src"
-    echo "📁 Destino: $dest"
-    [[ -n "$bandwidth" ]] && echo "🌐 Límite de ancho de banda: $bandwidth"
-    [[ -n "$retry_opts" ]] && echo "🔄 Reintentos automáticos activados"
-    [[ " ${extra_opts[*]} " =~ "--dry-run" ]] && echo "🔍 Modo preview activado"
+    rsync_opts+=("${options[@]}")
 
-    # Ejecutar el comando y manejar la salida
+    local rsync_cmd="rsync \"$src\" \"$dest\" ${rsync_opts[*]}"
+
+    _info "Iniciando backup..."
+    _info "  Origen: ${_Y}$src${_N}"
+    _info "  Destino: ${_Y}$dest${_N}"
+    if [[ -n "$bandwidth" ]]; then _info "  Ancho de banda limitado: ${_Y}$bandwidth${_N}"; fi
+    if $dry_run; then _info "  ${_Y}PREVIEW MODE ACTIVADO${_N}"; fi
+    if $delete; then _warn "  Opción ${_Y}--delete${_N} ACTIVADA. ¡Archivos en destino podrían ser eliminados!"; fi
+    if $retry_mode; then _info "  Reintentos automáticos activados."; fi
+    if [[ -n "$log_file" ]]; then _info "  Guardando log en: ${_Y}$log_file${_N}"; fi
+
+
     if [[ -n "$log_file" ]]; then
-        echo "📝 Guardando log en: $log_file"
-        eval "$cmd" 2>&1 | tee "$log_file"
-        status=${PIPESTATUS[0]}
+        eval "$rsync_cmd" 2>&1 | tee "$log_file"
+        local status=${PIPESTATUS[0]}
     else
-        eval "$cmd"
-        status=$?
+        eval "$rsync_cmd"
+        local status=$?
     fi
 
-    # Mostrar resultado
-    if [ $status -eq 0 ]; then
-        echo "✅ Transferencia completada exitosamente"
-        [[ -n "$log_file" ]] && echo "📝 Log guardado en: $log_file"
-    else
-        echo "❌ Error durante la transferencia (código: $status)"
-        [[ -n "$log_file" ]] && echo "📝 Consulta el log en: $log_file"
-    fi
 
+    if [[ $status -eq 0 ]]; then
+        _success "Backup completado exitosamente."
+        [[ -n "$log_file" ]] && _info "Log guardado en: ${_Y}$log_file${_N}"
+    else
+        _error "Error durante el backup (código: $status)."
+        [[ -n "$log_file" ]] && _info "Revisa el log para más detalles: ${_Y}$log_file${_N}"
+    fi
     return $status
 }
 
-# Función para copias rápidas
-qcopy() {
-    backup "$1" "$2" --fast --smart
+
+# Funciones de copia rápida
+qcopy() { backup "$1" "$2" --fast --smart; }
+# Función de sincronización segura
+safesync() { backup "$1" "$2" --checksum --smart --retry; }
+# Función de previsualización de sincronización
+preview_sync() { backup "$1" "$2" --preview --verbose; }
+# Función de copia con log
+logcopy() { backup "$1" "$2" --smart --log; }
+# Función de copia lenta/limitada
+slowcopy() { backup "$1" "$2" --bandwidth 1M --smart; }
+
+get_window_info() {
+    echo "Haz clic en la ventana..."
+    xprop | awk '
+    /^WM_CLASS/ {
+        sub(/.* =/, "instance: ");
+        sub(/,/, "\nclass: ");
+        print $0
+    }
+    /^WM_NAME/ {
+        sub(/.* =/, "title: ");
+        print $0
+    }
+    /_NET_WM_WINDOW_TYPE\(ATOM\)/ {
+        gsub(/.*\//, "type: ", $2);
+        print $2
+    }
+    /WM_WINDOW_ROLE\(STRING\)/ {
+        sub(/.* =/, "role: ");
+        print $0
+    }'
 }
 
-# Función para sincronización segura
-safesync() {
-    backup "$1" "$2" --checksum --smart --retry
+lastmodified() {
+    local n=${1:-10}
+    find . -type f -printf '%T@ %p\n' | sort -n | tail -n "$n" | awk '{gsub(/^[0-9]+\.[0-9]+\s+/, ""); print}'
 }
 
-# Función para previsualizar cambios
-preview_sync() {
-    backup "$1" "$2" --preview --verbose
+mt() {
+    local d
+    d=$(mktemp -d "/tmp/p$$.XXXXXX")
+    if [[ -d "$d" ]]; then
+        trap "rm -rf '$d'" EXIT
+        cd "$d" || return 1        
+    else
+        echo "[x] Error: No se pudo crear el directorio temporal" >&2
+        return 1
+    fi
 }
 
-# Función para copias con log
-logcopy() {
-    backup "$1" "$2" --smart --log
+mcd() {
+    mkdir -p "$1" && cd "$1"
 }
 
-# Función para copias lentas/throttled
-slowcopy() {
-    backup "$1" "$2" --bandwidth 1M --smart
+field() {
+    local field_num=${1:-1}
+    local separator=${2:- }
+    awk -F "$separator" "{print \$$field_num}"
 }
+
+total() {
+    awk '{sum += $1} END {print sum}'
+}
+
+wttr() {
+    local req="wttr.in/${1:-}"
+    [[ $(tput cols) -lt 125 ]] && req+="?n"
+    curl -H "Accept-Language: ${LANG%_*}" --compressed "$req"
+}
+
+ports() {
+    sudo ss -tulpn | grep LISTEN
+}
+# vim:ft=sh
