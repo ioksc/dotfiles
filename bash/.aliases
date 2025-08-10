@@ -1,77 +1,143 @@
-# ========================
-# MIRRORS OPTIMIZADOS
-# ========================
+# +---------------------------------+
+# |  >_  Dotfiles - ioksc  >_       |
+# +---------------------------------+
 
+# =============
+# EDITORES
+# =============
+alias v='vim'
+alias vi='vim'
+
+# =============
+# REFLECTOR / MIRRORS
+# =============
 _mirror() {
-    local sort="$1" desc="$2"
-    sudo reflector --protocol https --latest 50 --sort "$sort" --save /etc/pacman.d/mirrorlist \
-        && echo "🌠 $desc"
+    local sort="$1" desc="$2" country="${3:-}"
+    local cmd="sudo reflector --protocol https --latest 30 --sort $sort"
+    [[ -n "$country" ]] && cmd+=" --country '$country'"
+    eval "$cmd --save /etc/pacman.d/mirrorlist" && echo "✅ $desc"
 }
 
-alias mirror_speed='_mirror rate "Espejos más rápidos configurados"'
-alias mirror_fast='_mirror delay "Espejos de baja latencia"'
-alias mirror_score='_mirror score "Espejos mejor calificados"'
+alias mirror_speed='_mirror rate "Mirrors optimizados por velocidad"'
+alias mirror_delay='_mirror delay "Mirrors optimizados por latencia"'
+alias mirror_score='_mirror score "Mirrors optimizados por puntuación"'
 
-# ========================
+# =============
 # ARCHIVOS Y DIRECTORIOS
-# ========================
-alias ls='eza --icons --group-directories-first'
-alias ll='eza -al --icons --group-directories-first --color-scale'
-alias lt='eza -aT --icons --level=2'
+# =============
+if command -v eza &>/dev/null; then
+    alias ls='eza --icons --group-directories-first --color=auto'
+    alias ll='eza -alF --icons --group-directories-first --color=auto'
+    alias lt='eza -aT --icons --level=2 --color=auto'
+    alias la='eza -a --icons --color=auto'
+    alias lss='eza -alF --sort=size --icons --group-directories-first --color=auto'
+    alias lst='eza -alF --sort=modified --icons --group-directories-first --color=auto'
+else
+    alias ls='ls --color=auto --group-directories-first'
+    alias ll='ls -alF --color=auto --group-directories-first'
+    alias la='ls -A --color=auto'
+    alias l='ls -CF --color=auto'
+fi
 
-# ========================
+alias grep='grep --color=auto'
+alias fgrep='fgrep --color=auto'
+alias egrep='egrep --color=auto'
+
+# =============
 # UTILIDADES ESENCIALES
-# ========================
-alias unlockdb='sudo rm -f /var/lib/pacman/db.lck && echo "🔓 Lock removido"'
+# =============
+alias unlockdb='sudo rm -f /var/lib/pacman/db.lck'
 alias jctl='journalctl -p 3 -xb -n 25'
-alias grub-update='sudo grub-mkconfig -o /boot/grub/grub.cfg && echo "GRUB actualizado"'
-alias reload='exec $SHELL -l'
+alias jctll='journalctl -xb -f'
+alias jctlt='journalctl -xb -p 3 --since=today'
+alias grub-update='sudo grub-mkconfig -o /boot/grub/grub.cfg'
+# alias reload='exec $SHELL -l'
+reload() {
+    source ~/.bashrc
+    if command -v starship >/dev/null 2>&1; then
+        eval "$(starship init bash)"
+        PS1="$(starship prompt)"
+    fi
+    clear
+}
+
 alias duf='duf -theme dark'
 alias top='htop'
+alias cpu='htop -s PERCENT_CPU'
+alias mem='htop -s PERCENT_MEM'
 
-# ========================
+# =============
 # SEGURIDAD
-# ========================
-alias rm='rm -iv'
+# =============
+alias rm='rm -i'
 alias mv='mv -i'
 alias cp='cp -i'
 alias chmod='chmod --verbose'
 alias chown='chown --verbose'
-alias mcd='mkdircd() { mkdir -p "$1" && cd "$1"; }; mkdircd'
 
-# ========================
-# DESARROLLO - GIT
-# ========================
-alias gs='git status'
-alias ga='git add'
-alias gc='git commit -m'
-alias gp='git push'
-alias glc='git log --graph --abbrev-commit --oneline --decorate --all'
-alias gd='git diff'                    # Ver diferencias
-alias gds='git diff --staged'          # Diferencias en staged
-alias gb='git branch'                  # Listar ramas
-alias gco='git checkout'               # Cambiar ramas
-alias gcb='git checkout -b'            # Crear y cambiar a nueva rama
-alias gm='git merge'                   # Combinar ramas
-alias gr='git rebase'                  # Rebasear
-alias gpl='git pull'                   # Pull con actualizaciones
-alias gcl='git clone'                  # Clonar repositorio
-alias grs='git reset --soft HEAD^'     # Deshacer último commit (manteniendo cambios)
-alias grh='git reset --hard'           # Reset duro
-alias grep='grep --color=auto'
+# =============
+# GIT
+# =============
+if command -v git &>/dev/null; then
+    alias gs='git status'
+    alias ga='git add'
+    alias gaa='git add --all'
+    alias gc='git commit -m'
+    alias gca='git commit --amend'
+    alias gp='git push'
+    alias gpf='git push --force-with-lease'
+    alias glc='git log --graph --abbrev-commit --oneline --decorate --all --color=always'
+    alias gll='git log --pretty=format:"%C(yellow)%h%Cred%d %Creset%s%Cblue [%cn]" --decorate'
+    alias gd='git diff'
+    alias gds='git diff --staged'
+    alias gb='git branch'
+    alias gba='git branch -a'
+    alias gco='git checkout'
+    alias gcb='git checkout -b'
+    alias gm='git merge'
+    alias gr='git rebase'
+    alias gpl='git pull'
+    alias gplr='git pull --rebase'
+    alias gcl='git clone'
+    alias grs='git reset --soft HEAD^'
+    alias grh='git reset --hard'
+    alias gst='git stash'
+    alias gstp='git stash pop'
+    alias gstl='git stash list'
+
+    gbyauth() {
+        git log --pretty=format:"%h %ad | %s%d [%an]" --date=short --author="$1"
+    }
+
+    alias gbclean='git branch --merged | egrep -v "(^\*|master|main|dev)" | xargs -r git branch -d'
+fi
+
+# =============
+# DOCKER
+# =============
+if command -v docker &>/dev/null; then
+    alias dps='docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"'
+    alias dpsa='docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"'
+    alias dstop='docker stop $(docker ps -q)'
+    alias drm='docker rm $(docker ps -aq)'
+    alias dpull='docker pull'
+    alias dlogs='docker logs -f'
+    alias dins='docker inspect'
+    alias dexec='docker exec -it'
+    alias dprune='docker system prune -a --volumes'
+    alias dstats='docker stats'
+fi
+
+# =============
+# OTROS ALIAS Y FUNCIONES
+# =============
+if command -v rg &>/dev/null; then
+    alias hl="rg --passthru"
+    alias rgs="rg -i -g '!.git/' --hidden"
+fi
+
+alias burpsuite="/home/ioksc/burp-launcher.sh &>/dev/null &"
+alias random="wal -i ~/Wallpapers/ &>/dev/null && clear && fastfetch --config examples/14"
 
 
-# ========================
-#  DOCKER
-# ========================
-alias docker-ps='docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"'
-alias docker-stop='docker stop $(docker ps -q)'  # Parar todos los contenedores
-alias docker-rm='docker rm $(docker ps -aq)'     # Eliminar contenedores parados
-alias docker-pull='docker pull'                  # Actualizar imágenes
-alias docker-logs='docker logs -f'               # Seguir logs en tiempo real
-
-# ========================
-#  Other useful aliases
-# ========================
-alias burpsuite='/home/ioksc/burp-launcher.sh &>/dev/null &'
-alias aleatorio='wal -i ~/Wallpapers/ &>/dev/null  && clear && fastfetch --config examples/14'
+# vim:ft=sh
