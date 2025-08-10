@@ -1,0 +1,188 @@
+# ===== LFRC CLEAN CONFIG =====
+# Configuración limpia y funcional para lf
+
+# ===== CONFIGURACIONES BÁSICAS =====
+# set hidden true
+set icons true
+set number true
+set relativenumber true
+set shell bash
+set shellopts '-eu'
+set ifs "\n"
+set scrolloff 5
+set tabstop 4
+set drawbox true
+set mouse true
+set dircounts true
+set info size:time
+set timefmt "2006-01-02 15:04"
+set ratios 1:2:3
+set promptfmt "\033[34;1m%d\033[0m\033[1m%f\033[0m"
+
+# ===== PREVIEW =====
+set preview true
+set previewer '~/.config/lf/preview'
+set cleaner '~/.config/lf/cleaner'
+
+# ===== NAVEGACIÓN BÁSICA =====
+map gg top
+map G bottom
+map <c-u> half-up
+map <c-d> half-down
+
+# Toggle hidden files (ARREGLADO)
+map . set hidden!
+map <c-r> reload
+
+# ===== OPERACIONES DE ARCHIVOS =====
+map <enter> open
+map yy copy
+map dd delete
+map pp paste
+map r rename
+map <space> toggle
+map v invert
+map u unselect
+
+# Crear archivos/directorios
+map a push :touch<space>
+map A push :mkdir<space>
+
+# ===== NAVEGACIÓN RÁPIDA =====
+map gh cd ~
+map gd cd ~/Downloads
+map gD cd ~/Documents
+map gp cd ~/Pictures
+map gc cd ~/.config
+map gr cd /
+
+# ===== COMANDOS ESENCIALES =====
+
+# Papelera segura
+cmd trash ${{
+    if command -v trash-put >/dev/null 2>&1; then
+        trash-put $fx
+    else
+        mkdir -p ~/.local/share/Trash/files
+        mv $fx ~/.local/share/Trash/files/
+    fi
+}}
+
+# Extraer archivos
+cmd extract ${{
+    case $f in
+        *.tar.bz2)   tar xjf "$f"   ;;
+        *.tar.gz)    tar xzf "$f"   ;;
+        *.bz2)       bunzip2 "$f"   ;;
+        *.rar)       unrar x "$f"   ;;
+        *.gz)        gunzip "$f"    ;;
+        *.tar)       tar xf "$f"    ;;
+        *.tbz2)      tar xjf "$f"   ;;
+        *.tgz)       tar xzf "$f"   ;;
+        *.zip)       unzip "$f"     ;;
+        *.Z)         uncompress "$f";;
+        *.7z)        7z x "$f"      ;;
+        *.tar.xz)    tar xf "$f"    ;;
+        *) echo "Formato no soportado" ;;
+    esac
+}}
+
+# Comprimir a zip
+cmd zip ${{
+    zipname="${f%.*}.zip"
+    if [ -d "$f" ]; then
+        zip -r "$zipname" "$f"
+    else
+        zip "$zipname" "$f"
+    fi
+}}
+
+# Comprimir a tar.gz
+cmd targz ${{
+    tarname="${f%.*}.tar.gz"
+    tar czf "$tarname" "$f"
+}}
+
+# Duplicar archivo
+cmd duplicate ${{
+    if [ -f "$f" ]; then
+        cp "$f" "${f%.*}_copy.${f##*.}"
+    elif [ -d "$f" ]; then
+        cp -r "$f" "${f}_copy"
+    fi
+}}
+
+# FZF buscar directorio
+cmd fzf_jump ${{
+    if command -v fzf >/dev/null 2>&1; then
+        res="$(find . -type d 2>/dev/null | fzf --reverse --header='Ir a directorio')"
+        if [ -n "$res" ]; then
+            lf -remote "send $id cd '$res'"
+        fi
+    else
+        echo "fzf no está instalado"
+    fi
+}}
+
+# Abrir con programa
+cmd open-with ${{
+    printf "Abrir con: "
+    read -r app
+    $app "$f" &
+}}
+
+# Información del archivo
+cmd fileinfo ${{
+    clear
+    echo "Archivo: $f"
+    echo "===================="
+    file "$f"
+    ls -la "$f"
+    echo
+    echo "Presiona ENTER para continuar"
+    read
+}}
+
+# Renombrado múltiple simple
+cmd bulk-rename ${{
+    if [ -n "$fs" ]; then
+        printf '%s\n' $fs > /tmp/lf-files-old
+        printf '%s\n' $fs > /tmp/lf-files-new
+        $EDITOR /tmp/lf-files-new
+        if [ -f /tmp/lf-files-new ]; then
+            paste /tmp/lf-files-old /tmp/lf-files-new | while read old new; do
+                if [ "$old" != "$new" ] && [ ! -e "$new" ]; then
+                    mv "$old" "$new"
+                fi
+            done
+            rm -f /tmp/lf-files-old /tmp/lf-files-new
+        fi
+    fi
+    lf -remote "send $id unselect"
+}}
+
+# ===== KEYBINDINGS PARA COMANDOS =====
+map DD trash
+map E extract
+map Z zip
+map T targz
+map cc duplicate
+map <c-f> fzf_jump
+map ow open-with
+map i fileinfo
+map br bulk-rename
+
+# ===== COMANDOS PARA TIPOS DE ARCHIVO =====
+# Abrir archivos específicos
+cmd open ${{
+    case $(file --mime-type -Lb $f) in
+        text/*) $EDITOR $fx;;
+        *) for f in $fx; do setsid $OPENER $f > /dev/null 2> /dev/null & done;;
+    esac
+}}
+
+# ===== FUNCIONES TECLA =====
+map <f-2> rename
+map <f-5> reload
+map <f-8> delete
+map <delete> delete

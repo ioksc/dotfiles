@@ -1,0 +1,3 @@
+#!/bin/bash
+# Limpia el preview cuando sales del archivo
+printf '\033[2J\033[H'

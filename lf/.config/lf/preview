@@ -1,0 +1,39 @@
+#!/bin/bash
+file="$1"
+width="$2"
+height="$3"
+
+case "$(file --mime-type -Lb "$file")" in
+    text/*|application/json)
+        if command -v bat >/dev/null 2>&1; then
+            bat --color=always --style=numbers --line-range=:100 "$file"
+        else
+            cat "$file"
+        fi
+        ;;
+    image/*)
+        if command -v chafa >/dev/null 2>&1; then
+            chafa -c 256 -s "${width}x${height}" "$file"
+        else
+            echo "📷 $(basename "$file")"
+            file "$file"
+        fi
+        ;;
+    application/pdf)
+        if command -v pdftotext >/dev/null 2>&1; then
+            pdftotext -l 5 -nopgbrk -q "$file" -
+        else
+            echo "📄 $(basename "$file")"
+        fi
+        ;;
+    application/zip)
+        unzip -l "$file" 2>/dev/null
+        ;;
+    *)
+        if [[ -d "$file" ]]; then
+            ls -la --color=always "$file"
+        else
+            file "$file"
+        fi
+        ;;
+esac
