@@ -3,36 +3,36 @@
 # in this file, and unbind the ones you don't want to use.
 
 
-# personal launch scripts(Service manager)
-"alacritty --class float_custom -e ~/dotfiles/scripts/runas.sh"
+# personal launch scripts(Service manager) Win + z
+"uv run --directory ~/Workspace/flet-service main.py"
     m:0x40 + c:52
     Mod4 + z
 
-# Flameshot (Screenshot)
+# Flameshot (Screenshot) Print
 "flameshot gui"
     m:0x0 + c:107
     Print
-# launch personal note taking app
+# launch personal note taking app | F1
 "obsidian"
     m:0x0 + c:179
     XF86Tools
 
-# To lower the volume:
+# To lower the volume: F2
 "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
     m:0x0 + c:122
     XF86AudioLowerVolume
 
-# To raise the volume, with a limit of 150%:
+# To raise the volume, with a limit of 150%: F3
 "wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+"
     m:0x0 + c:123
     XF86AudioRaiseVolume
 
-# To mute/unmute the volume (toggle):
+# To mute/unmute the volume (toggle): F4
 "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
     m:0x0 + c:121
     XF86AudioMute
 
-# f5 (Stop)
+# f5 (Stop)z
 "playerctl stop"
     m:0x0 + c:174
     XF86AudioStop
@@ -62,7 +62,7 @@
     XF86HomePage
 
 # f11
-"qalculate-qt"
+"alacritty --class float_custom -e uv run --directory ~/Workspace/service-man-py main.py"
     m:0x0 + c:148
     XF86Calculator
 
@@ -70,7 +70,7 @@
     m:0x41 + c:24
     Shift+Mod4 + q
 
-"firefox"
+"firefox-nightly"
     m:0x40 + c:56
     Mod4 + b
 
