@@ -10,11 +10,11 @@ set $default_monitor primary
 # Custom Monitor: get monitor name --> xrandr --query | grep " connected" | cut -d " " -f1
 # set $default_monitor DVI-I-2
 # Set Font for window titles.
-set $default_font Terminess Nerd Font 13
+set $default_font JetBrainsMono Nerd Font 12
 
 # ---------- Window settings ----------
 # Determines which border style new windows will have
-default_border pixel 1
+default_border pixel 0
 
 # Font for window titles.
 font Pango: $default_font
@@ -26,10 +26,10 @@ focus_follows_mouse yes
 floating_modifier $mod
 
 # Borders
-gaps inner 5
-gaps outer 5
+gaps outer 3
+gaps inner 3
 smart_gaps on
-hide_edge_borders smart
+hide_edge_borders true
 
 # ------ Window settings ------
 # Keybindings Configuration
@@ -41,63 +41,39 @@ include workspaces.conf
 # ------ Rules ------
 include windows_rules.conf
 
-# ---------- Colors ----------
-set $base03    #002B36
-set $base02    #073642
-set $base01    #586E75
-set $base00    #657B83
-set $base0     #839496
-set $base1     #93A1A1
-set $base2     #EEE8D5
-set $base3     #FDF6E3
-
-# Colores de acento
-set $yellow    #B58900
-set $orange    #CB4B16
-set $red       #DC322F
-set $magenta   #D33682
-set $violet    #6C71C4
-set $blue      #268BD2
-set $cyan      #2AA198
-set $green     #859900
-
-# Colores de fondo
-set $background        #00141A
-set $background_light  #002B36
-# -------------------- Colors --------------------
-
+# -------------- Cyberpunk Colors ------------------
+set $bg         #0A0E14
+set $fg         #C0CAF5
+set $gray       #545C7E
+set $cyan       #7DCFFF
+set $blue       #7AA2F7
+set $purple     #BB9AF7
+set $pink       #F7768E
+set $green      #9ECE6A
+set $yellow     #E0AF68
+set $orange     #FF9E64
+set $red        #F7768E
 
 # Configuración de colores para ventanas
-client.focused          $blue       $background    $base3      $blue       $blue
-client.focused_inactive $base01     $base03        $base1      $base01     $base01
-client.unfocused        $base02     $background    $base00     $base02     $base02
-client.urgent           $red        $red           $base3      $red        $red
-client.placeholder      $base02     $background    $base00     $base02     $base02
-client.background       $background
+client.focused          $cyan       $bg    $fg      $cyan       $cyan
+client.focused_inactive $gray       $bg    $fg      $gray       $gray
+client.unfocused        $bg         $bg    $gray    $bg         $bg
+client.urgent           $red        $red   $fg      $red        $red
+client.placeholder      $gray       $bg    $gray    $gray       $gray
+client.background       $bg
 
 # Configuración de i3bar
 bar {
-    font pango: $default_font
-    i3bar_command i3bar
-    output $default_monitor
-    position top
-    status_command i3blocks
-    strip_workspace_numbers yes
-    workspace_buttons yes
-    tray_output $default_monitor
-
-    workspace_min_width 30
-    strip_workspace_name no
+    i3bar_command $HOME/.config/polybar/launch.sh
     colors {
-        background $background
-        statusline $base3
-        separator  $base01
-        # workspace            border      background  text
-        focused_workspace     $blue       $blue         $base3
-        active_workspace      $base02     $base02       $base1
-        inactive_workspace    $base03     $base03       $base00
-        urgent_workspace      $red        $red          $base3
-        binding_mode          $yellow     $yellow       $base3
+        background $bg
+        statusline $fg
+        separator  $gray
+        focused_workspace     $cyan    $cyan    $bg
+        active_workspace      $blue    $blue    $bg
+        inactive_workspace    $bg      $bg      $gray
+        urgent_workspace      $red     $red     $bg
+        binding_mode          $yellow  $yellow  $bg
     }
 }
 
