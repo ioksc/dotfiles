@@ -1,59 +1,62 @@
+# i3blocks config file
+#
+# Consult http://i3wm.org/i3blocks for more details
+
+# Global properties
 separator=false
-color="#f2f2f2"
+color=#c0caf5
 separator_block_width=9
 markup=pango
 
-# [window_title]
-# command=xdotool getactivewindow getwindowname
-# interval=1
-# label=<span color="#268BD2"> </span>
-#
-# [openpvn]
-# command=node ~/dotfiles/scripts/js/network_info.js | awk -F ': ' '{printf "<span color=\"#6C71C4\">%s</span> %s\n", $1, $2}'
-# interval=30
-# label=<span color="#6C71C4">  </span>
-
-
 [arch_update]
-command= ~/dotfiles/scripts/new_arch_updates.sh
+command=~/dotfiles/scripts/new_arch_updates.sh
 interval=once
-label=<span color="#268BD2"> </span>
+label=<span color="#4781ecff"> </span>
+color=#4781ecff
+
+[cpu_temp]
+command=sensors | awk '/Core [0-9]+/ {print $3}' | sort -nr | head -1
+interval=10
+label=<span color="#bb9af7"> </span>
+color=#bb9af7
 
 [redshift]
 command=~/dotfiles/scripts/redshift-toogle.sh
 interval=once
+color=#9ece6a
+
+[headset_battery]
+command=/home/ioksc/dotfiles/scripts/my-headphone.sh
+interval=5
+label=<span color="#7aa2f7"></span>
+color=#7aa2f7
 
 [keyboard]
 command=~/dotfiles/scripts/keyboard_layout.sh
 interval=once
-label=<span color="#2AA198">  </span>
-
-# [root]
-# command=df --output=avail / | tail -n 1 | numfmt --to=iec-i --from-unit=1024 --format="%.2f" | tr -d 'A-Za-z'
-# interval=10
-# label=<span color="#B58900"> </span>
+label=<span color="#7dcfff">  </span>
+color=#7dcfff
 
 [cpu]
 command=mpstat 1 1 | awk '/all/ {print 100 - $12 "%"}'
 interval=5
-label=<span color="#859900"> </span>
+label=<span color="#9ece6a"> </span>
+color=#9ece6a
 
 [volume]
 command=~/dotfiles/scripts/volman.sh
 interval=1
-label=<span color="#D33682"></span>
+label=<span color="#f7768e"></span>
+color=#f7768e
 
-# [time_madrid]
-# command=TZ="Europe/Madrid" date '+%H:%M<span color="#2AA198">%Z</span>'
-# interval=10
-# label=<span color="#2AA198">󱑒 </span>
+[time_madrid]
+command=TZ="Europe/Madrid" date '+%H:%M<span color="#7dcfff">%Z</span>'
+interval=10
+label=<span color="#7dcfff">󱑒 </span>
+color=#7dcfff
 
 [time_now]
-command=date '+%H:%M<span color="#268BD2">%Z</span>'
+command=date '+%H:%M<span color="#7aa2f7">%Z</span>'
 interval=10
-label=<span color="#268BD2">󱑒 </span>
-
-# [date]
-# command=date '+%d %b %Y'
-# interval=3600
-# label=<span color="#DC322F">󰸘 </span>
+label=<span color="#7aa2f7">󱑒 </span>
+color=#7aa2f7
