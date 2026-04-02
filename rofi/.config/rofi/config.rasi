@@ -4,8 +4,8 @@ configuration {
   show-icons: true;
   icon-theme: "pop";
   hide-scrollbar: true;
-  
-  modi: "drun,run,window";
+
+  modi: "drun,run,window,calc";
   terminal: "alacritty";
   sidebar-mode: true;
 
@@ -15,7 +15,7 @@ configuration {
 
 drun-display-format: "{name} [<span foreground='#B0B0B0' weight='light' size='small'><i>({generic})</i></span>]";
 
-  location: 0;
+  location: 3;
   disable-history: false;
 
   matching: "fuzzy";
@@ -28,6 +28,6 @@ drun-display-format: "{name} [<span foreground='#B0B0B0' weight='light' size='sm
   kb-row-up: "Up,Control+k";
   kb-row-down: "Down,Control+j";
 }
-@theme "themes/osaka.rasi"
+@theme "themes/raycast_modern.rasi"
 
 
