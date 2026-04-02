@@ -1,7 +1,5 @@
-# ===== LFRC CLEAN CONFIG =====
-# Configuración limpia y funcional para lf
 
-# ===== CONFIGURACIONES BÁSICAS =====
+# ===== CONFIGURACION =====
 # set hidden true
 set icons true
 set number true
