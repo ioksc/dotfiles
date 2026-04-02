@@ -1,308 +1,293 @@
 " ============================================================================
-" VIM CONFIGURATION FILE
+" VIM CONFIGURATION - OPTIMIZED VERSION
 " ============================================================================
 
-" ============================================================================
-" SECTION 1: BASIC SETTINGS
-" ============================================================================
-set nocompatible                " Use Vim improvements over Vi
-set encoding=utf-8              " UTF-8 encoding by default
-set noshowmode                  " Don't show mode in command line
-set lazyredraw                  " Reduce unnecessary redraws
-set updatetime=100              " Faster updates for better experience
-set ttyfast                     " Better performance on modern terminals
-set regexpengine=0              " Use faster regex engine
-set synmaxcol=300               " Increase syntax highlighting limit for long lines
-set hidden                      " Allow changing buffers without saving
-set clipboard^=unnamed,unnamedplus " Better clipboard integration
-set title                       " Show filename in window title
-set autoread                    " Reload files modified externally
-set secure                      " Secure mode for modelines
-set modelines=0                 " Disable modelines
-set nomodeline                  " Disable modeline processing
-set nospell                     " Disable spell checking by default
-set cmdheight=2                 " Command line height for error messages
+" --- Prevenir carga múltiple ---
+if exists('g:vimrc_loaded')
+    finish
+endif
+let g:vimrc_loaded = 1
 
 " ============================================================================
-" SECTION 2: DIRECTORY AND FILE MANAGEMENT
+" SECTION 1: CORE SETTINGS
 " ============================================================================
-set swapfile                    " Enable swap files for crash recovery
-set directory=~/.vim/swap//     " Directory for .swp files (// uses full names)
-set backup                      " Enable permanent backups
-set backupdir=~/.vim/backup//   " Directory for backup files
-set writebackup                 " Create temporary backup during saving
-set undofile                    " Enable persistent undo history
-set undodir=~/.vim/undodir      " Directory for undo files
-
-" Create directories if they don't exist
-for s:dir in ['.vim/swap', '.vim/backup', '.vim/undodir']
-    if !isdirectory($HOME.'/'.s:dir)
-        call mkdir($HOME.'/'.s:dir, 'p', 0700)
-    endif
-endfor
-unlet s:dir
+set nocompatible
+set encoding=utf-8
+set hidden
+set autoread
+set secure
+set modelines=0
+if has('patch-8.1.1365')
+    set modelineexpr
+endif
+set belloff=all
 
 " ============================================================================
-" SECTION 3: INTERFACE AND DISPLAY
+" SECTION 2: PLUGIN MANAGEMENT (vim-plug)
 " ============================================================================
-set number                      " Show line numbers
-set relativenumber              " Show relative line numbers
-set cursorline                  " Highlight current line
-set signcolumn=yes              " Always show sign column
-set scrolloff=8                 " Keep 8 lines visible when scrolling
-set sidescrolloff=8             " Horizontal margin when scrolling
-set showmatch                   " Highlight matching brackets
-set matchtime=1                 " Faster bracket matching highlight
-set shortmess+=IcF              " Reduce startup messages
-set list                        " Show special characters
-set listchars=space:·,tab:▸-,trail:•,extends:→,precedes:←,nbsp:␣
+call plug#begin('~/.vim/plugged')
+
+" Syntax & Language Support
+Plug 'sheerun/vim-polyglot'
+Plug 'wuelnerdotexe/vim-astro'
+Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries', 'for': 'go' }
+
+" Linting & Formatting
+Plug 'dense-analysis/ale'
+
+" Git Integration
+Plug 'tpope/vim-fugitive'
+Plug 'airblade/vim-gitgutter'
+
+" File Navigation
+Plug 'preservim/nerdtree', {'on': 'NERDTreeToggle'}
+Plug 'tpope/vim-vinegar'
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
+
+" UI & Appearance
+Plug 'vim-airline/vim-airline'
+Plug 'ioksc/vim-osaka-solarized-theme'
+Plug 'ryanoasis/vim-devicons'
+Plug 'ap/vim-css-color', {'for': ['css', 'scss', 'sass', 'less', 'html', 'javascript', 'typescript', 'vue', 'astro']}
+
+" Productivity
+Plug 'Exafunction/codeium.vim', { 'branch': 'main' }
+Plug 'kshenoy/vim-signature'
+Plug 'turbio/bracey.vim', {'do': 'npm install --prefix server', 'on': 'Bracey'}
+
+call plug#end()
+
+" ============================================================================
+" SECTION 3: APPEARANCE AND UI
+" ============================================================================
+if exists('+termguicolors')
+    let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+    let &t_8b = "\<Esc>[48;2;%lu;%lu;%lum"
+    set termguicolors
+endif
+set t_Co=256
+
+syntax enable
+set background=dark
+colorscheme osaka_solarized
+
+set number
+set relativenumber
+set numberwidth=4
+set cursorline
+set signcolumn=yes
+set laststatus=2
+set noshowmode
+set cmdheight=2
+set title
+set showmatch
+set matchtime=2
+set shortmess+=IcFs
+set scrolloff=5
+set sidescrolloff=5
 
 " ============================================================================
 " SECTION 4: EDITING AND FORMATTING
 " ============================================================================
-set expandtab                   " Convert tabs to spaces
-set tabstop=4                   " Tab width
-set softtabstop=4               " Virtual tab width
-set shiftwidth=4                " Indentation width
-set autoindent                  " Automatic indentation
-set smartindent                 " Smart indentation
-set formatoptions+=j            " Smart comment joining
-set backspace=indent,eol,start  " Flexible backspace
-set textwidth=0                 " No automatic line wrapping
+set expandtab
+set tabstop=4
+set softtabstop=4
+set shiftwidth=4
+set autoindent
+set smartindent
+set smarttab
+set textwidth=0
+set wrap
+set linebreak
+set backspace=indent,eol,start
+set magic
+set formatoptions-=t
+set formatoptions+=croqnlj
 
 " ============================================================================
-" SECTION 5: SEARCH AND NAVIGATION
+" SECTION 5: SEARCH AND REPLACE
 " ============================================================================
-set incsearch                   " Incremental search
-set hlsearch                    " Highlight search results
-set ignorecase                  " Ignore case in searches
-set smartcase                   " Case sensitive if uppercase used
-set path+=**                    " Recursive search in subdirectories
-
-" Wild menu settings
-set wildmenu                    " Enhanced completion menu
-set wildmode=longest:full,full  " Better completion behavior
-set wildignore+=*/node_modules/*,*/.git/*,*.pyc,*/__pycache__/*,*.o,*.class,*.log
-set completeopt=menuone,noselect,noinsert
+set ignorecase
+set smartcase
+set incsearch
+set hlsearch
+set wrapscan
 
 " ============================================================================
-" SECTION 6: PERFORMANCE OPTIMIZATIONS
+" SECTION 6: FILE MANAGEMENT
 " ============================================================================
-set timeoutlen=500              " Key combination timeout
-set ttimeoutlen=10              " Terminal key code timeout
+let s:vim_dirs = {
+    \ 'swap': expand('~/.vim/swap'),
+    \ 'backup': expand('~/.vim/backup'),
+    \ 'undodir': expand('~/.vim/undodir')
+    \ }
 
-" Performance optimization for large files
-autocmd BufWinEnter * if line2byte(line("$") + 1) > 1000000 |
-    \ syntax clear | set nocursorline | endif
+for [s:name, s:path] in items(s:vim_dirs)
+    if !isdirectory(s:path)
+        call mkdir(s:path, 'p', 0700)
+    endif
+endfor
+unlet s:vim_dirs s:name s:path
+
+set swapfile
+set directory=~/.vim/swap//
+set backup
+set backupdir=~/.vim/backup//
+set undofile
+set undodir=~/.vim/undodir//
+set undolevels=1000
+set undoreload=10000
+
+" Wildmenu settings
+set wildmenu
+set wildmode=longest:full,full
+set wildignore+=*.o,*.pyc,*.pyo,__pycache__,*.so,*.swp,*.zip
+set wildignore+=*.git,*.hg,*.svn,node_modules,*.egg-info
 
 " ============================================================================
-" SECTION 7: PLUGIN MANAGEMENT (vim-plug)
+" SECTION 7: PERFORMANCE
 " ============================================================================
-call plug#begin('~/.vim/plugged')
-Plug 'sheerun/vim-polyglot'        " Syntax highlighting
-Plug 'dense-analysis/ale', {'for': ['python', 'javascript', 'typescript', 'go', 'c', 'cpp', 'sh', 'json','']} " Linting
-Plug 'tpope/vim-fugitive'          " Git integration
-Plug 'airblade/vim-gitgutter'      " Git signs
-Plug 'preservim/nerdtree', {'on': ['NERDTreeToggle', 'NERDTreeFind']} " File explorer
-Plug 'junegunn/fzf', { 'do': { -> fzf#install() } } " Fuzzy search
-Plug 'junegunn/fzf.vim'            " Vim integration
-Plug 'vim-airline/vim-airline'     " Status bar
-Plug 'ap/vim-css-color', {'for': ['css', 'scss', 'sass', 'less', 'html', 'javascript', 'typescript', 'vim']} " CSS colors
-Plug 'Exafunction/codeium.vim', { 'branch': 'main' } " AI autocomplete
-Plug 'kshenoy/vim-signature'       " Mark management
-Plug 'ioksc/vim-osaka-solarized-theme' " Custom theme
-Plug 'ryanoasis/vim-devicons'      " Icons
-Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries', 'for': 'go' } " Go support
-Plug 'turbio/bracey.vim', {'do': 'npm install --prefix server'}
-call plug#end()
+set lazyredraw
+set updatetime=100
+set timeoutlen=500
+set ttimeoutlen=10
+set synmaxcol=300
+
+augroup large_file_optimization
+    autocmd!
+    autocmd BufReadPost * if line2byte(line("$") + 1) > 1000000 |
+        \ setlocal syntax=OFF nocursorline norelativenumber eventignore+=FileType |
+        \ endif
+augroup END
 
 " ============================================================================
-" SECTION 8: APPEARANCE
+" SECTION 8: SPLITS AND WINDOWS
 " ============================================================================
-if has('termguicolors')
-    set termguicolors
-endif
-set t_Co=256
-syntax on
-set background=dark
-colorscheme osaka_solarized
+set splitbelow
+set splitright
+set equalalways
 
 " ============================================================================
 " SECTION 9: PLUGIN CONFIGURATIONS
 " ============================================================================
 
-" NERDTree configuration
-let g:NERDTreeShowHidden = 1
-let g:NERDTreeQuitOnOpen = 3
-let g:NERDTreeMinimalUI = 1
-let g:NERDTreeIgnore = ['^node_modules$', '\.pyc$', '^__pycache__$', '\.git$']
-let g:NERDTreeAutoDeleteBuffer = 1
-let g:NERDTreeDirArrowExpandable = '+'
-let g:NERDTreeDirArrowCollapsible = '-'
-autocmd BufEnter * if (winnr("$") == 1 && exists("b:NERDTree") && b:NERDTree.isTabTree()) | q | endif
-
-" GitGutter configuration
-let g:gitgutter_max_signs = 1000
-let g:gitgutter_sign_added = '+'
-let g:gitgutter_sign_modified = '~'
-let g:gitgutter_sign_removed = '-'
-let g:gitgutter_preview_win_floating = 1
-let g:gitgutter_enabled = 1
-let g:gitgutter_realtime = 1
-let g:gitgutter_eager = 1
-
-" ALE configuration
-let g:ale_lint_on_text_changed = 'always'
-let g:ale_lint_delay = 500
+" --- ALE ---
+let g:ale_lint_on_text_changed = 'normal'
 let g:ale_lint_on_insert_leave = 1
 let g:ale_lint_on_enter = 0
 let g:ale_lint_on_save = 1
 let g:ale_fix_on_save = 1
+let g:ale_python_auto_virtualenv = 1
 let g:ale_sign_error = '✘'
 let g:ale_sign_warning = '⚠'
-let g:ale_echo_msg_error_str = 'E'
-let g:ale_echo_msg_warning_str = 'W'
 let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
 
 let g:ale_linters = {
-    \ 'sh': ['shellcheck'],
-    \ 'python': ['pyrefly','ruff'],
+    \ 'go': ['golangci-lint', 'gopls'],
+    \ 'python': ['ruff'],
     \ 'javascript': ['eslint'],
-    \ 'typescript': ['eslint', 'tsserver'],
-    \ 'css': ['stylelint'],
-    \ 'html': ['htmlhint'],
-    \ 'go': ['gopls', 'golangci-lint'],
-    \ 'c': ['clang','cppcheck'],
-    \ 'cpp': ['clang','cppcheck'],
+    \ 'typescript': ['eslint', 'tsserver']
     \ }
 
 let g:ale_fixers = {
-    \ '*': ['remove_trailing_lines', 'trim_whitespace'],
-    \ 'python': ['ruff','ruff_format'],
+    \ 'python': ['ruff', 'ruff_format'],
+    \ 'go': ['gofmt', 'goimports'],
     \ 'javascript': ['prettier', 'eslint'],
     \ 'typescript': ['prettier', 'eslint'],
-    \ 'css': ['prettier', 'stylelint'],
+    \ 'json': ['prettier'],
     \ 'html': ['prettier'],
-    \ 'markdown': ['prettier'],
-    \ 'go': ['goimports','golines'],
-    \ 'c': ['clang-format'],
-    \ 'cpp': ['clang-format'],
-    \ 'sh': ['shfmt'],
-    \ 'json': ['jq'],
+    \ 'css': ['prettier']
     \ }
 
-let g:ale_c_cc_options = '-std=c11 -Wall'
-let g:ale_cpp_cc_options = '-std=c++17 -Wall'
-let g:ale_c_cppcheck_options = '--enable=style,performance,portability --suppress=missingIncludeSystem'
-let g:ale_cpp_cppcheck_options = '--enable=style,performance,portability --suppress=missingIncludeSystem'
-
-let g:ale_go_goimports_executable = '/home/ioksc/go/bin/goimports'
-let g:ale_go_golines_executable = '/home/ioksc/go/bin/golines'
-let g:ale_go_golines_options = '-m 80'
-let g:ale_go_gopls_executable = '/home/ioksc/go/bin/gopls'
-let g:ale_go_golangci_lint_executable = '/home/ioksc/go/bin/golangci-lint'
-let g:ale_go_golangci_lint_options = '--fast --enable=revive --enable=godot'
-let g:ale_go_golangci_lint_package = 1
-let g:ale_go_gofmt_options = '-s'
-let g:ale_go_govet_options = ''
-
-" Airline configuration
-let g:airline_powerline_fonts = 1
-let g:airline_theme = 'solarized_osaka'
-let g:airline#extensions#ale#enabled = 1
-let g:airline#extensions#tabline#enabled = 1
-let g:airline#extensions#tabline#formatter = 'unique_tail'
-let g:airline#extensions#branch#enabled = 1
-let g:airline#extensions#hunks#enabled = 1
-
-" FZF configuration
-let g:fzf_layout = {'window': {'width': 0.9, 'height': 0.8}}
-let g:fzf_preview_window = ['right:50%']
-let g:fzf_buffers_jump = 1
-let g:fzf_action = {
-    \ 'ctrl-t': 'tab split',
-    \ 'ctrl-s': 'split',
-    \ 'ctrl-v': 'vsplit'
-    \ }
-
-let g:fzf_colors = {
-    \ 'fg':      ['fg', 'Normal'],
-    \ 'bg':      ['bg', 'Normal'],
-    \ 'hl':      ['fg', 'Comment'],
-    \ 'fg+':     ['fg', 'CursorLine', 'CursorColumn', 'Normal'],
-    \ 'bg+':     ['bg', 'CursorLine', 'CursorColumn'],
-    \ 'hl+':     ['fg', 'Statement'],
-    \ 'info':    ['fg', 'PreProc'],
-    \ 'border':  ['fg', 'Ignore'],
-    \ 'prompt':  ['fg', 'Conditional'],
-    \ 'pointer': ['fg', 'Exception'],
-    \ 'marker':  ['fg', 'Keyword'],
-    \ 'spinner': ['fg', 'Label'],
-    \ 'header':  ['fg', 'Comment']
-    \ }
-
-" Codeium configuration
-let g:codeium_enabled = 1
-let g:codeium_disable_bindings = 0
-let g:codeium_idle_delay = 75
-
-" vim-go configuration
-let g:go_fmt_command = "goimports"
-let g:go_fmt_autosave = 1
-let g:go_imports_autosave = 1
-let g:go_mod_fmt_autosave = 1
-let g:go_fmt_fail_silently = 0
-let g:go_fmt_experimental = 0
-let g:go_auto_type_info = 0
-let g:go_auto_sameids = 0
-let g:go_updatetime = 800
-let g:go_def_mode = 'gopls'
-let g:go_info_mode = 'gopls'
-let g:go_rename_command = 'gopls'
+" --- vim-go ---
+let g:go_fmt_command = 'goimports'
+let g:go_metalinter_autosave = 0
+let g:go_list_type = 'quickfix'
 let g:go_highlight_functions = 1
 let g:go_highlight_methods = 1
-let g:go_highlight_fields = 1
-let g:go_highlight_types = 1
+let g:go_highlight_structs = 1
 let g:go_highlight_operators = 1
 let g:go_highlight_build_constraints = 1
-let g:go_highlight_structs = 1
-let g:go_highlight_interfaces = 1
-let g:go_highlight_function_calls = 1
-let g:go_highlight_function_parameters = 1
-let g:go_highlight_variable_declarations = 1
-let g:go_highlight_variable_assignments = 1
-let g:go_doc_popup_window = 1
-let g:go_doc_keywordprg_enabled = 1
-let g:go_test_show_name = 1
-let g:go_test_timeout = '10s'
-let g:go_test_prepend_name = 1
-let g:go_debug_windows = {
-    \ 'vars':  'leftabove 35vnew',
-    \ 'stack': 'leftabove 20new',
-\ }
-let g:go_template_autocreate = 1
-let g:go_template_file = "main.go"
-let g:go_template_use_pkg = 1
+let g:go_auto_type_info = 1
+
+" --- NERDTree ---
+let g:NERDTreeShowHidden = 1
+let g:NERDTreeMinimalUI = 1
+let g:NERDTreeIgnore = ['\.pyc$', '__pycache__', '\.git$', 'node_modules']
+let g:NERDTreeQuitOnOpen = 1
+
+" --- FZF ---
+let g:fzf_layout = { 'down': '~40%' }
+let g:fzf_preview_window = ['right:50%', 'ctrl-/']
+
+" --- Airline ---
+let g:airline_powerline_fonts = 1
+let g:airline#extensions#ale#enabled = 1
+let g:airline#extensions#branch#enabled = 1
+let g:airline#extensions#tabline#enabled = 0
+
+" --- GitGutter ---
+let g:gitgutter_map_keys = 0
+let g:gitgutter_sign_added = '+'
+let g:gitgutter_sign_modified = '~'
+let g:gitgutter_sign_removed = '-'
+
+" --- Codeium ---
+let g:codeium_disable_bindings = 0
+imap <script><silent><nowait><expr> <C-g> codeium#Accept()
+imap <C-;> <Cmd>call codeium#CycleCompletions(1)<CR>
+imap <C-,> <Cmd>call codeium#CycleCompletions(-1)<CR>
+imap <C-x> <Cmd>call codeium#Clear()<CR>
 
 " ============================================================================
-" SECTION 10: KEY MAPPINGS
+" SECTION 10: PYTHON & VIRTUALENV
 " ============================================================================
+" 1. Intentar detectar el entorno de uv (.venv) en el directorio actual
+let s:venv_path = getcwd() . '/.venv/bin/python'
 
-" Leader key
-let mapleader=","
+if executable(s:venv_path)
+    " Si existe .venv, usamos ese Python para todo
+    let g:python3_host_prog = s:venv_path
+    let g:ale_python_executable = s:venv_path
+    " Esto obliga a ALE a buscar ruff/flake8 dentro del .venv
+    let g:ale_python_auto_virtualenv = 1
+else
+    " Si no hay .venv, usamos el Python de Arch (del sistema)
+    " Nota: En Arch, esto suele ser /usr/bin/python
+    let g:python3_host_prog = '/usr/bin/python'
+    let g:ale_python_executable = '/usr/bin/python'
+endif
+" 2. Configuración específica para los linters de ALE
+" Esto asegura que ALE use el ejecutable del entorno virtual para Ruff
+let g:ale_python_ruff_executable = 'uv'
+let g:ale_python_ruff_use_global = 0
+let g:ale_python_ruff_options = 'run ruff'
+let g:ale_python_ruff_format_options = 'run ruff'
+" Ejecutar el archivo actual con uv en un terminal (Vim estándar)
+nnoremap <leader>k :!uv run python3 %<CR>
+" ============================================================================
+" SECTION 11: KEY MAPPINGS
+" ============================================================================
+let mapleader = ' '
+let maplocalleader = ','
 
-" General shortcuts
+" File operations
 nnoremap <leader>w :w<CR>
 nnoremap <leader>q :q<CR>
+nnoremap <leader>x :x<CR>
 nnoremap <leader>Q :qa!<CR>
-nnoremap <leader>e :e $MYVIMRC<CR>
 nnoremap <leader>r :source $MYVIMRC<CR>
-nnoremap <leader>/ :nohlsearch<CR>
 
-" Buffer navigation
-nnoremap <leader>b :bnext<CR>
-nnoremap <leader>p :bprev<CR>
-nnoremap <leader>d :bd<CR>
+" Search
+nnoremap <leader>h :nohlsearch<CR>
+nnoremap <leader>/ :set hlsearch!<CR>
+
+" Buffer management
+nnoremap <leader>bd :bd<CR>
+nnoremap <leader>bn :bnext<CR>
+nnoremap <leader>bp :bprevious<CR>
+nnoremap <leader>bl :buffers<CR>
 
 " Window navigation
 nnoremap <C-h> <C-w>h
@@ -311,196 +296,165 @@ nnoremap <C-k> <C-w>k
 nnoremap <C-l> <C-w>l
 
 " Window resizing
-nnoremap <M-j> :resize -2<CR>
-nnoremap <M-k> :resize +2<CR>
-nnoremap <M-h> :vertical resize -2<CR>
-nnoremap <M-l> :vertical resize +2<CR>
+nnoremap <leader>+ :resize +5<CR>
+nnoremap <leader>- :resize -5<CR>
+nnoremap <leader>> :vertical resize +5<CR>
+nnoremap <leader>< :vertical resize -5<CR>
 
-" Visual line navigation
-nnoremap j gj
-nnoremap k gk
-
-" Visual mode indentation
+" Better indenting
 vnoremap < <gv
 vnoremap > >gv
 
-" Plugin mappings
-nnoremap <leader>n :NERDTreeToggle<CR>
-nnoremap <leader>f :Files<CR>
-nnoremap <leader>g :GFiles<CR>
-nnoremap <leader>s :Buffers<CR>
-nnoremap <leader>x :ALEFix<CR>
+" Move lines up/down
+nnoremap <A-j> :m .+1<CR>==
+nnoremap <A-k> :m .-2<CR>==
+vnoremap <A-j> :m '>+1<CR>gv=gv
+vnoremap <A-k> :m '<-2<CR>gv=gv
 
-" Git mappings
+" Plugin shortcuts
+nnoremap <leader>n :NERDTreeToggle<CR>
+nnoremap <leader>f :NERDTreeFind<CR>
+nnoremap <leader>p :Files<CR>
+nnoremap <leader>b :Buffers<CR>
+nnoremap <leader>g :Rg<CR>
+nnoremap <leader>t :Tags<CR>
+
+" Git shortcuts
 nnoremap <leader>gs :Git<CR>
 nnoremap <leader>gc :Git commit<CR>
 nnoremap <leader>gp :Git push<CR>
+nnoremap <leader>gl :Git log<CR>
+nnoremap <leader>gd :Gdiff<CR>
 
-" ALE navigation
-nmap [e <Plug>(ale_previous_wrap)
-nmap ]e <Plug>(ale_next_wrap)
+" ALE shortcuts
+nmap <silent> <leader>aj :ALENext<CR>
+nmap <silent> <leader>ak :ALEPrevious<CR>
+nmap <silent> <leader>af :ALEFix<CR>
+nmap <silent> <leader>ad :ALEDetail<CR>
 
-" Project search
-nnoremap <leader>/ :Rg<CR>
-nnoremap ,go :-1read /home/ioksc/.vim/templates/skeleton.go<CR>6jci"
+" Quick edits
+nnoremap <leader>ev :edit $MYVIMRC<CR>
+nnoremap <leader>sv :source $MYVIMRC<CR>
 
-" Go-specific mappings
-augroup go_mappings
+" Template shortcuts
+nnoremap <localleader>py :execute 'read ' . expand('~/.vim/templates/skeleton.py')<CR>
+nnoremap <localleader>go :execute 'read ' . expand('~/.vim/templates/skeleton.go')<CR>
+nnoremap <localleader>js :execute 'read ' . expand('~/.vim/templates/skeleton.js')<CR>
+nnoremap <localleader>html :execute 'read ' . expand('~/.vim/templates/skeleton.html')<CR>
+
+" Utility shortcuts
+nnoremap <leader>cr :ClearRegisters<CR>
+nnoremap <leader>ss :setlocal spell!<CR>
+nnoremap <leader>W :%s/\s\+$//e<CR>
+
+" ============================================================================
+" SECTION 12: CUSTOM COMMANDS
+" ============================================================================
+command! ClearRegisters call ClearAllRegisters()
+command! Reload source $MYVIMRC
+command! -nargs=1 TemplateNew call CreateFromTemplate(<f-args>)
+command! MakeTags !ctags -R .
+command! TrimWhitespace :%s/\s\+$//e
+
+" ============================================================================
+" SECTION 13: AUTOCOMMANDS
+" ============================================================================
+
+" Templates
+augroup templates_system
     autocmd!
-    " Basic commands
-    autocmd FileType go nnoremap <buffer> <leader>gr :GoRun<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gb :GoBuild<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gt :GoTest<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gtf :GoTestFunc<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gc :GoCoverage<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gct :GoCoverageToggle<CR>
-    autocmd FileType go nnoremap <buffer> <leader>grs :!go run %<CR>
-
-    " Code navigation
-    autocmd FileType go nnoremap <buffer> <leader>gd :GoDef<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gv :GoDefSplit<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gts :GoDefTab<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gi :GoInfo<CR>
-    autocmd FileType go nnoremap <buffer> <leader>grf :GoReferrers<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gim :GoImplements<CR>
-
-    " Refactoring
-    autocmd FileType go nnoremap <buffer> <leader>grn :GoRename<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gfs :GoFillStruct<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gie :GoIfErr<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gke :GoKeyify<CR>
-
-    " Documentation
-    autocmd FileType go nnoremap <buffer> <leader>gdo :GoDoc<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gdb :GoDocBrowser<CR>
-
-    " File navigation
-    autocmd FileType go nnoremap <buffer> <leader>ga :GoAlternate<CR>
-
-    " Linting and errors
-    autocmd FileType go nnoremap <buffer> <leader>gvet :GoVet<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gme :GoMetaLinter<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gch :GoChannelPeers<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gca :GoCallers<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gce :GoCallees<CR>
-    autocmd FileType go nnoremap <buffer> <leader>gic :GoInstallBinaries<CR>
-augroup END
-
-" ============================================================================
-" SECTION 11: CUSTOM COMMANDS
-" ============================================================================
-command! -nargs=0 Sudo w !sudo tee % >/dev/null
-command! -nargs=0 Format :ALEFix
-command! -nargs=0 Config :e $MYVIMRC
-command! -nargs=0 Reload :source $MYVIMRC
-
-" Go commands
-command! -nargs=0 GoSetup :GoInstallBinaries
-command! -nargs=0 GoUpdate :GoUpdateBinaries
-command! -nargs=0 GoMod :!go mod tidy
-command! -nargs=0 GoBench :!go test -bench=.
-
-" ============================================================================
-" SECTION 12: AUTOCOMMANDS
-" ============================================================================
-
-" Format and cleanup
-augroup format_cleanup
-    autocmd!
-    " Prevent automatic comments on new lines
-    autocmd BufRead,BufNewFile * setlocal formatoptions-=cro
-    " Remove trailing whitespace
-    autocmd BufWritePre * :%s/\s\+$//e
-augroup END
-
-" Cursor position
-augroup cursor_position
-    autocmd!
-    " Restore cursor position
-    autocmd BufReadPost *
-        \ if line("'\"") > 0 && line("'\"") <= line("$") |
-        \   exe "normal! g`\"" |
-        \ endif
+    autocmd BufNewFile *.go silent! execute '0read ' . expand('~/.vim/templates/skeleton.go') | 7
+    autocmd BufNewFile *.py silent! execute '0read ' . expand('~/.vim/templates/skeleton.py') | $
+    autocmd BufNewFile *.js silent! execute '0read ' . expand('~/.vim/templates/skeleton.js') | $
+    autocmd BufNewFile *.html silent! execute '0read ' . expand('~/.vim/templates/skeleton.html') | $
 augroup END
 
 " File monitoring
 augroup file_monitoring
     autocmd!
-    " Reload buffer automatically if changed
-    autocmd FocusGained,BufEnter,CursorHold,CursorHoldI *
-        \ if mode() != 'c' && !bufexists("[Command Line]") |
-        \   checktime |
-        \ endif
-    " Notification when file changes externally
-    autocmd FileChangedShellPost *
-        \ echohl WarningMsg |
-        \ echo "File changed on disk. Buffer reloaded." |
-        \ echohl None
+    autocmd FocusGained,BufEnter * if mode() ==# 'n' && getcmdwintype() == '' | checktime | endif
 augroup END
 
-" Filetype specific settings
-augroup filetype_specific
+" Auto-save
+augroup auto_save
     autocmd!
-    autocmd FileType python setlocal textwidth=88 colorcolumn=89
-    autocmd FileType javascript,typescript,html,css,json
-        \ setlocal shiftwidth=2 tabstop=2 softtabstop=2
-    autocmd FileType markdown setlocal spell spelllang=es,en
-    autocmd FileType go setlocal noexpandtab tabstop=4 shiftwidth=4 softtabstop=4 textwidth=100 colorcolumn=101
-    autocmd FileType go setlocal formatoptions+=cro
-    autocmd FileType go setlocal comments=s1:/*,mb:*,ex:*/,://
-    autocmd FileType go setlocal commentstring=//\ %s
+    autocmd FocusLost,WinLeave * if &modified && !&readonly && expand('%') != '' && &buftype == '' | silent! update | endif
 augroup END
 
-" Assembly filetype
-augroup asm_filetype
+" Restore cursor position
+augroup restore_cursor
     autocmd!
-    autocmd BufNewFile,BufRead *.asm setfiletype nasm
+    autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") && &ft !~# 'commit' | exe "normal! g`\"" | endif
 augroup END
 
-" ============================================================================
-" SECTION 13: PYTHON AND VIRTUAL ENVIRONMENTS
-" ============================================================================
-if has('python3')
-    " Automatically detect active virtual environment
-    if !empty($VIRTUAL_ENV)
-        let g:python3_host_prog = $VIRTUAL_ENV . '/bin/python'
-    endif
-endif
-
-" Optional configuration for using uv with ALE
-" let g:ale_python_ruff_executable = 'uv run ruff'
-" let g:ale_python_isort_executable = 'uv run isort'
-" let g:ale_python_mypy_executable = 'uv run mypy'
-
-" ============================================================================
-" SECTION 14: GO ERROR HANDLING
-" ============================================================================
-augroup go_errors
+" Highlight on yank
+augroup highlight_yank
     autocmd!
-    " Open quickfix automatically if there are errors
-    autocmd QuickFixCmdPost [^l]* nested cwindow
-    autocmd QuickFixCmdPost    l* nested lwindow
-    " Close quickfix if no errors
-    autocmd BufWinEnter quickfix setlocal nowrap
+    autocmd TextYankPost * silent! lua vim.highlight.on_yank {higroup='IncSearch', timeout=200}
 augroup END
 
-" Function to show Go errors more clearly
-function! s:GoErrorsToggle()
-    if getqflist() == []
-        echo "No Go errors"
+" File type specific settings
+augroup filetype_settings
+    autocmd!
+    autocmd FileType python setlocal colorcolumn=88
+    autocmd FileType go setlocal noexpandtab tabstop=4 shiftwidth=4
+    autocmd FileType javascript,typescript,json,html,css,vue setlocal tabstop=2 shiftwidth=2 softtabstop=2
+    autocmd FileType yaml,yml setlocal tabstop=2 shiftwidth=2 softtabstop=2
+    autocmd FileType markdown setlocal wrap linebreak spell spelllang=es,en
+    autocmd FileType gitcommit setlocal spell spelllang=es,en
+augroup END
+
+" ============================================================================
+" SECTION 14: FUNCTIONS
+" ============================================================================
+
+" Clear all registers
+function! ClearAllRegisters()
+    let l:regs = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-"='
+    for l:r in split(l:regs, '\zs')
+        call setreg(l:r, [])
+    endfor
+    redraw!
+    echo "Registros limpiados."
+endfunction
+
+" Create file from template
+function! CreateFromTemplate(template_name)
+    let l:template_path = expand('~/.vim/templates/skeleton.' . a:template_name)
+    if filereadable(l:template_path)
+        execute 'read ' . l:template_path
     else
-        copen
+        echohl ErrorMsg
+        echo "Template no encontrado: " . l:template_path
+        echohl None
     endif
 endfunction
 
-" ============================================================================
-" SECTION 15: MISCELLANEOUS
-" ============================================================================
-xnoremap <leader>gc  :<C-u>'<-1put ='/*'<CR>:'>+1put ='*/'<CR>
+" Toggle relative number
+function! ToggleRelativeNumber()
+    if &relativenumber
+        set norelativenumber
+    else
+        set relativenumber
+    endif
+endfunction
 
-if executable('rg')
-    set grepprg=rg\ --vimgrep\ --hidden\ --smart-case
-    set grepformat=%f:%l:%c:%m
+command! ToggleRelNumber call ToggleRelativeNumber()
+nnoremap <leader>rn :ToggleRelNumber<CR>
+
+" ============================================================================
+" SECTION 15: STATUS LINE (fallback si airline falla)
+" ============================================================================
+if !exists('g:loaded_airline')
+    set statusline=%f\ %m%r%h%w
+    set statusline+=%=
+    set statusline+=%y\
+    set statusline+=%{&fileencoding?&fileencoding:&encoding}
+    set statusline+=\ [%{&fileformat}]
+    set statusline+=\ %p%%
+    set statusline+=\ %l:%c
 endif
 
-" inoremap <c-y> <cmd>call augment#Accept()<cr>
+" ============================================================================
+" END OF CONFIGURATION
+" ============================================================================
