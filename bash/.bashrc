@@ -1,106 +1,122 @@
-# ~/.bashrc - Configuración
-# shellcheck shell=bash
-# ===== Verificación de Shell Interactivo =====
-[[ -z "$PS1" ]] && return
+# ~/.bashrc - Optimizado
 
-# ===== Entorno y Variables =====
+# Salir si no es interactivo
+[[ $- != *i* ]] && return
+
+# ===== Variables de entorno =====
 export EDITOR="vim"
-export VISUAL="$EDITOR"
+export VISUAL="vim"
 export TERMINAL="alacritty"
-export BROWSER="zen-browser"
-
-# export LANG="es_ES.UTF-8"
-# export LC_ALL="$LANG"
-
-export GLOBSORT=-1
-
-
-aditional_paths=(
-	"$HOME/.local/bin"
-	"$HOME/go/bin"
-	"$HOME/.cargo/bin"
-)
-
-for p in "${aditional_paths[@]}"; do
-	[[ ":$PATH:" != *":$p:"* ]] && PATH="$p:$PATH"
-done
-
-PATH=$(awk -v RS=: '!a[$0]++ {if (NR>1) printf ":"; printf "%s", $0}' <<<"$PATH")
-
-export PATH
-
-export CARGO_BUILD_JOBS=2 # $(nproc)  # Usa número de núcleos disponibles
-
-export HISTCONTROL="ignoreboth:erasedups"
-export HISTIGNORE="ls:ll:pwd:exit:cd:cd -:cd ..:rm *:clear:history:h:bg:fg:jobs"
-export HISTSIZE=1000000
-export HISTFILESIZE=2000000
-export HISTFILE="$HOME/.bash_history"
-
-# ===== Opciones del Shell =====
-shopt -s autocd cdspell direxpand dirspell globstar nocaseglob checkwinsize histappend cmdhist lithist histverify
-umask 0027 # Permisos restrictivos
-
-# ===== Prompt y Starship =====
-export STARSHIP_CONFIG="$HOME/.config/starship.toml"
-eval "$(starship init bash)"
-
-# Workaround aún más simple para tmux + Starship
-if [[ -n "$TMUX" && -z "$_STARSHIP_TMUX_FIXED" ]]; then
-	export _STARSHIP_TMUX_FIXED=1
-	PS1="$(starship prompt)"
-fi
-
-# ===== FZF Avanzado =====
-if command -v fzf >/dev/null; then
-	export FZF_DEFAULT_COMMAND="fd --type f --hidden --follow --exclude .git --exclude node_modules 2>/dev/null"
-	export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
-	export FZF_ALT_C_COMMAND="fd --type d --hidden --follow --exclude .git --exclude node_modules 2>/dev/null"
-	export FZF_DEFAULT_OPTS="
-        --height 60% --layout=reverse --border sharp
-        --preview-window=hidden --pointer='▶' --marker='✓'
-        --color='fg:#D4D4D4,fg+:#FFFFFF,bg:#1E1E2E,bg+:#313244'
-        --color='info:#CBA6F7,prompt:#89B4FA,pointer:#F9E2AF'
-        --color='marker:#A6E3A1,spinner:#94E2D5,header:#F38BA8'
-        --bind 'ctrl-/:toggle-preview,ctrl-space:toggle-preview'
-        --bind 'ctrl-y:execute-silent(echo -n {} | xsel -ib)+abort'
-        --bind 'ctrl-e:execute($EDITOR {})+abort'
-        --bind 'ctrl-f:preview-page-down,ctrl-b:preview-page-up'
-        --bind 'alt-j:preview-down,alt-k:preview-up'
-        --bind 'ctrl-a:select-all,ctrl-d:deselect-all'
-        --preview '[[ -f {} ]] && bat --style=numbers --color=always {} 2>/dev/null || eza -T -L 2 --color=always {} 2>/dev/null || ls -la --color=always {}'"
-	[[ -f /usr/share/fzf/key-bindings.bash ]] && source /usr/share/fzf/key-bindings.bash
-fi
-
-# ===== Herramientas de Visualización =====
+export BROWSER="firefox"
 export MANPAGER="sh -c 'col -bx | bat -l man -p --theme=Dracula'"
 export BAT_PAGER="less -RF"
 export MANROFFOPT="-P -c"
+export COLORTERM=truecolor
+export _JAVA_AWT_WM_NONREPARENTING=1
 
-# ===== Completado y Herramientas =====
-command -v carapace >/dev/null && source <(carapace _carapace bash)
-eval "$(uv generate-shell-completion bash)"
+CLOUDFLARE_API_TOKEN="$(<~/.cloudflare_token)" || true
+export CLOUDFLARE_API_TOKEN
 
-# ===== Configuraciones Personalizadas =====
-custom_files=(
-	"$HOME/.aliases"
-	"$HOME/.functions"
-)
-for file in "${custom_files[@]}"; do
-	[[ -f "$file" ]] && source "$file"
-done
+_NCORE=$(nproc)
+export PLATFORMIO_RUN_JOBS=$_NCORE
+export CARGO_BUILD_JOBS=$_NCORE
+unset _NCORE
 
-# ===== Temas y Colores (wal) =====
-if [[ -f ~/.cache/wal/colors-tty.sh ]]; then
-	source "$HOME/.cache/wal/colors-tty.sh"
+_add_to_path() {
+  [[ -d "$1" ]] && PATH="$1:$PATH"
+}
+_add_to_path "$HOME/.local/bin"
+_add_to_path "$HOME/.cargo/bin"
+_add_to_path "$HOME/go/bin"
+_add_to_path "$HOME/.local/share/fnm"
+unset _add_to_path
+
+# ===== Historial =====
+export HISTCONTROL="ignoreboth:erasedups"
+export HISTIGNORE="ls:ll:la:pwd:exit:cd:cd -:cd ..:rm *:clear:history:h:bg:fg:jobs"
+export HISTSIZE=100000
+export HISTFILESIZE=200000
+export HISTTIMEFORMAT="%F %T "
+
+# ===== Terminal y color =====
+export TERM=xterm-256color
+if [[ -n "$TMUX" ]]; then
+  export TERM=tmux-256color
 fi
-if [[ -f ~/.cache/wal/sequences ]] && [[ -z "$VIM" ]] && [[ -z "$NVIM" ]] && [[ -z "$TMUX" ]] && [[ -z "$CLIFM" ]]; then
-	cat ~/.cache/wal/sequences
+
+# ===== Shell options =====
+shopt -s autocd cdspell direxpand dirspell globstar nocaseglob checkwinsize \
+  histappend cmdhist lithist histverify
+
+# Permisos por defecto (archivos 640, directorios 750)
+umask 0027
+# umask 0022
+
+# ===== Función Helper para Comandos =====
+_has() {
+  [[ -x "$(command -v "$1" 2>/dev/null)" ]]
+}
+
+# Starship prompt
+if _has starship; then
+  eval "$(starship init bash)"
 fi
 
-unset p file
+# Zoxide - Navegación inteligente
+if _has zoxide; then
+  eval "$(zoxide init bash)"
+fi
 
-# ===== Prompt Command =====
-PROMPT_COMMAND="history -a; history -n; ${PROMPT_COMMAND:-:}"
+# ===== FZF - Fuzzy finder =====
+if _has fzf; then
+  _FZF_CMD="fd --type f --hidden --follow --exclude .git --exclude node_modules"
+  export FZF_DEFAULT_COMMAND="$_FZF_CMD"
+  export FZF_CTRL_T_COMMAND="$_FZF_CMD"
+  export FZF_ALT_C_COMMAND="fd --type d --hidden --follow --exclude .git --exclude node_modules"
+  export FZF_DEFAULT_OPTS="--height 60% --layout=reverse --border sharp --preview-window=hidden --pointer='▶' --marker='✓' --color='fg:#D4D4D4,fg+:#FFFFFF,bg:#1E1E2E,bg+:#313244,info:#CBA6F7,prompt:#89B4FA,pointer:#F9E2AF,marker:#A6E3A1,spinner:#94E2D5,header:#F38BA8' --bind 'ctrl-/:toggle-preview,ctrl-space:toggle-preview' --bind 'ctrl-y:execute-silent(echo -n {} | xsel -ib)+abort' --bind 'ctrl-e:execute(\$EDITOR {})+abort' --bind 'ctrl-f:preview-page-down,ctrl-b:preview-page-up' --bind 'alt-j:preview-down,alt-k:preview-up' --bind 'ctrl-a:select-all,ctrl-d:deselect-all' --preview '[[ -f {} ]] && bat --style=numbers --color=always {} || eza -T -L 2 --color=always {} || ls -la --color=always {}'"
 
-eval "$(zoxide init bash)"
+  [[ -f /usr/share/fzf/key-bindings.bash ]] && source /usr/share/fzf/key-bindings.bash
+  [[ -f /usr/share/fzf/completion.bash ]] && source /usr/share/fzf/completion.bash
+  unset _FZF_CMD
+fi
+
+# ===== Herramientas de Desarrollo =====
+
+# fnm - Node version manager
+if [[ -d "$HOME/.local/share/fnm" ]]; then
+  eval "$(fnm env --use-on-cd --shell bash)"
+fi
+
+# Cargo/Rust
+[[ -f "$HOME/.cargo/env" ]] && source "$HOME/.cargo/env"
+
+# Carapace - Completions
+_has carapace && source <(carapace _carapace bash)
+
+# ===== Herramientas Opcionales =====
+
+# Broot
+[[ -f "$HOME/.config/broot/launcher/bash/br" ]] && source "$HOME/.config/broot/launcher/bash/br"
+
+# Pywal - Colores del terminal
+[[ -f ~/.cache/wal/sequences ]] && cat ~/.cache/wal/sequences
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+# Archivos modulares
+
+[[ -f ~/.aliases ]] && source ~/.aliases
+[[ -f ~/.functions ]] && source ~/.functions
+
+# ===== Configuración Final =====
+
+# PROMPT_COMMAND optimizado para Starship
+_setup_prompt_command() {
+  local hist_cmd="history -a; history -n"
+  if [[ "$PROMPT_COMMAND" == *"starship_precmd"* ]]; then
+    PROMPT_COMMAND="$hist_cmd; ${PROMPT_COMMAND#"${hist_cmd}; "}"
+  else
+    PROMPT_COMMAND="$hist_cmd"
+  fi
+}
+_setup_prompt_command
