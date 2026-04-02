@@ -1,122 +1,155 @@
-# Funciones mejoradas de bashrc
-ranger() {
-    local tempfile
-    tempfile=$(mktemp) || return 1
+#!/usr/bin/env bash
+# shellcheck shell=bash
+# .functions - Funciones útiles para bash
 
-    trap "rm -f '$tempfile'" EXIT INT TERM
-    command ranger --choosedir="$tempfile" "${@:-$PWD}"
-    if [[ -s "$tempfile" ]]; then
-        local dir
-        dir=$(<"$tempfile")
+if [[ -t 1 ]]; then
+  _N='\033[0m'      # Normal
+  _R='\033[0;31m'   # Rojo
+  _G='\033[0;32m'   # Verde
+  _Y='\033[1;33m'   # Amarillo
+  _B='\033[0;34m'   # Azul
+  _ZIP='\033[1;35m' # Morado (para zip en el uso)
+else
+  _N='' _R='' _G='' _Y='' _B='' _ZIP=''
+fi
 
-        [[ "$dir" != "$PWD" ]] && cd "$dir"
-    fi
-
-    trap - EXIT INT TERM
-}
-# 📦 pkg: Busca e instala paquetes de AUR con fzf y caché
-pkg() {
-    local cache_file="$HOME/.cache/paru_pkglist"
-    local cache_time=86400 # 24 horas en segundos
-
-    # Crear directorio de caché si no existe
-    mkdir -p "$(dirname "$cache_file")"
-
-    # Verificar si el archivo de caché no existe o es antiguo (más de 24 horas)
-    if [[ ! -f "$cache_file" || $(( $(date +%s) - $(stat -c %Y "$cache_file") )) -gt "$cache_time" ]]; then
-        _info "Actualizando lista de paquetes de AUR..."
-        if ! paru -Slq > "$cache_file"; then
-            _error "Error al actualizar la lista de paquetes."
-            return 1
-        fi
-        _success "Lista de paquetes de AUR actualizada."
-    fi
-
-    fzf --multi \
-        --preview 'paru -Si {}' \
-        --preview-window=wrap \
-        --prompt='Buscar paquetes AUR > ' \
-        --bind 'ctrl-a:select-all,ctrl-d:deselect-all' \
-        --header "Usa Ctrl-a para seleccionar todo, Ctrl-d para deseleccionar todo" < "$cache_file" |
-    xargs -ro paru -S
-}
-
-# 📌 tm: Gestiona sesiones de tmux con facilidad
-tm() {
-    local session_name="$1"
-    local change_cmd="attach-session"
-
-    # Determinar si estamos dentro de una sesión tmux
-    [[ -n "$TMUX" ]] && change_cmd="switch-client"
-
-    # Si se proporciona un nombre de sesión
-    if [[ -n "$session_name" ]]; then
-        # Intentar conectar a la sesión existente o crear una nueva
-        tmux $change_cmd -t "$session_name" 2>/dev/null ||
-            { tmux new-session -d -s "$session_name" && tmux $change_cmd -t "$session_name"; }
-        return 0
-    fi
-
-    # Si no se proporciona nombre, mostrar selector con fzf
-    local session
-    session=$(tmux list-sessions -F "#{session_name}" 2>/dev/null | fzf --exit-0 --prompt='Sesiones tmux > ')
-
-    # Conectar a la sesión seleccionada o crear una nueva
-    if [[ -n "$session" ]]; then
-        tmux $change_cmd -t "$session"
-    else
-        tmux new-session
-    fi
-}
-
-# tmk: Mata sesiones de tmux con fzf
-tmk() {
-    # Listar y permitir selección múltiple de sesiones
-    local sessions
-    sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null |
-            fzf --multi \
-                --reverse \
-                --prompt='Matar sesión(es) tmux > ' \
-                --preview 'tmux capture-pane -pt {} -S -30' \
-                --preview-window=wrap,right,70% \
-                --header "Selecciona las sesiones a matar (Multi-selección con TAB)")
-
-    # Matar las sesiones seleccionadas
-    if [[ -n "$sessions" ]]; then
-        echo "$sessions" | xargs -I {} tmux kill-session -t {} &&
-            _success "Sesión(es) tmux eliminada(s)."
-    else
-        _info "No se seleccionaron sesiones para matar."
-    fi
-}
-
-# y: Navegador de archivos Yazi con integración cd
-y() {
-    local tmp_file="$(mktemp -t "yazi-cwd.XXXXXX")"
-    yazi "$@" --cwd-file="$tmp_file"
-
-    local cwd="$(cat "$tmp_file")"
-    if [[ -n "$cwd" && "$cwd" != "$PWD" ]]; then
-        builtin cd -- "$cwd"
-    fi
-    rm -f -- "$tmp_file" &>/dev/null
-}
-
+_info() { echo -e "${_B}ℹ️  INFO:${_N} $*"; }
+_warn() { echo -e "${_Y}⚠️  WARN:${_N} $*"; }
+_error() { echo -e "${_R}❌ ERROR:${_N} $*" >&2; }
+_success() { echo -e "${_G}✅ SUCCESS:${_N} $*"; }
 
 # ==============================================================================
-# Funciones de Backup (rsync)
+# Navegadores de archivos
+# ==============================================================================
+
+ranger() {
+  local tempfile dir
+  tempfile=$(mktemp -t "ranger-dir.XXXXXX") || return 1
+
+  command ranger --choosedir="$tempfile" "${@:-$PWD}"
+
+  if [[ -f "$tempfile" ]] && [[ -s "$tempfile" ]]; then
+    dir=$(<"$tempfile")
+    [[ "$dir" != "$PWD" ]] && builtin cd "$dir" || true
+  fi
+  rm -f "$tempfile"
+}
+
+y() {
+  local tmp_file cwd
+  tmp_file="$(mktemp -t "yazi-cwd.XXXXXX")" || return 1
+  yazi "$@" --cwd-file="$tmp_file"
+
+  if [[ -f "$tmp_file" ]] && [[ -s "$tmp_file" ]]; then
+    cwd="$(<"$tmp_file")"
+    [[ -n "$cwd" && "$cwd" != "$PWD" ]] && { builtin cd -- "$cwd" || return 1; }
+  fi
+  rm -f -- "$tmp_file" 2>/dev/null
+}
+
+# ==============================================================================
+# Gestión de paquetes AUR
+# ==============================================================================
+
+pkg() {
+  local cache_file="$HOME/.cache/paru_pkglist"
+  local cache_time=86400
+  local lock_file="$cache_file.lock"
+
+  mkdir -p "$(dirname "$cache_file")"
+
+  # Actualizar caché si no existe o está desactualizada
+  if [[ ! -f "$cache_file" ]] ||
+    [[ $(($(date +%s) - $(stat -c %Y "$cache_file" 2>/dev/null || echo 0))) -gt "$cache_time" ]]; then
+    _info "Actualizando lista de paquetes de AUR..."
+    if ! (
+      flock -n 200 || {
+        _warn "Otro proceso está actualizando la caché."
+        exit 1
+      }
+      paru -Slq >"$cache_file" 2>/dev/null
+    ) 200>"$lock_file"; then
+      _error "Error al actualizar la lista de paquetes."
+      return 1
+    fi
+    _success "Lista de paquetes de AUR actualizada."
+  fi
+
+  local selected
+  selected=$(fzf --multi \
+    --preview 'paru -Si {} 2>/dev/null' \
+    --preview-window=wrap \
+    --prompt='Buscar paquetes AUR > ' \
+    --bind 'ctrl-a:select-all,ctrl-d:deselect-all' \
+    --header "Ctrl-a: seleccionar todo | Ctrl-d: deseleccionar todo" <"$cache_file")
+
+  [[ -n "$selected" ]] && echo "$selected" | xargs -ro paru -S
+}
+
+# ==============================================================================
+# Gestión de tmux
+# ==============================================================================
+tm() {
+  local session_name="$1"
+  local change_cmd="attach-session"
+
+  [[ -n "$TMUX" ]] && change_cmd="switch-client"
+
+  if [[ -n "$session_name" ]]; then
+    # Validar nombre de sesión
+    if [[ ! "$session_name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+      echo "❌ Nombre de sesión inválido. Solo: a-z, A-Z, 0-9, _, -"
+      return 1
+    fi
+
+    if ! tmux $change_cmd -t "$session_name" 2>/dev/null; then
+      tmux new-session -d -s "$session_name" && tmux $change_cmd -t "$session_name"
+    fi
+    return 0
+  fi
+
+  local session
+  session=$(tmux list-sessions -F "#{session_name}" 2>/dev/null |
+    fzf --exit-0 --prompt='Sesiones tmux > ')
+
+  if [[ -n "$session" ]]; then
+    tmux $change_cmd -t "$session"
+  else
+    tmux new-session
+  fi
+}
+
+tmk() {
+  local sessions
+  sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null |
+    fzf --multi \
+      --reverse \
+      --prompt='Matar sesión(es) tmux > ' \
+      --preview 'tmux capture-pane -pt {} -S -30 2>/dev/null' \
+      --preview-window=wrap,right,70% \
+      --header "Selecciona las sesiones a matar (TAB para multi-selección)")
+
+  if [[ -n "$sessions" ]]; then
+    echo "$sessions" | xargs -I {} tmux kill-session -t {} &&
+      _success "Sesión(es) tmux eliminada(s)."
+  else
+    _info "No se seleccionaron sesiones para matar."
+  fi
+}
+
+# ==============================================================================
+# Sistema de backup con rsync
 # ==============================================================================
 
 _rsync_check() {
-    if ! command -v rsync &>/dev/null; then
-        _error "rsync no está instalado. Por favor, instálalo."
-        return 1
-    fi
-    return 0
+  command -v rsync &>/dev/null || {
+    _error "rsync no está instalado. Por favor, instálalo."
+    return 1
+  }
 }
 
 _backup_usage() {
-    cat <<EOF
+  cat <<EOF
 ${_ZIP} ${_Y}Uso: backup <origen> <destino> [opciones]${_N}
 
 Opciones:
@@ -140,213 +173,299 @@ Ejemplos:
 EOF
 }
 
-
 backup() {
-    _rsync_check || return 1
+  _rsync_check || return 1
 
-    if [[ "$#" -lt 2 || "$1" == "-h" || "$1" == "--help" ]]; then
-        _backup_usage
+  if [[ "$#" -lt 2 || "$1" == "-h" || "$1" == "--help" ]]; then
+    _backup_usage
+    return 1
+  fi
+
+  local src="$1" dest="$2"
+  shift 2
+
+  local rsync_opts=()
+  local bandwidth="" log_file=""
+  local dry_run=false delete=false fast_mode=false
+  local ignore_default=false smart_mode=false
+  local compress_mode=false retry_mode=false
+
+  # Parsear opciones
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+    -p | --preview)
+      dry_run=true
+      rsync_opts+=("--dry-run")
+      shift
+      ;;
+    -d | --delete)
+      delete=true
+      rsync_opts+=("--delete" "--delete-excluded")
+      shift
+      ;;
+    -v | --verbose)
+      rsync_opts+=("--verbose" "--info=progress2")
+      shift
+      ;;
+    -f | --fast)
+      fast_mode=true
+      rsync_opts+=("--whole-file")
+      shift
+      ;;
+    -c | --checksum)
+      rsync_opts+=("--checksum")
+      shift
+      ;;
+    -i | --ignore)
+      ignore_default=true
+      shift
+      ;;
+    -s | --smart)
+      smart_mode=true
+      shift
+      ;;
+    -z | --zip)
+      compress_mode=true
+      rsync_opts+=("--compress" "--compress-level=9")
+      shift
+      ;;
+    -l | --log)
+      log_file="/tmp/backup-$(date +%Y%m%d-%H%M%S).log"
+      shift
+      ;;
+    -b | --bandwidth)
+      shift
+      if [[ -n "$1" ]]; then
+        bandwidth="$1"
+        rsync_opts+=("--bwlimit=$1")
+        shift
+      else
+        _error "Opción --bandwidth requiere un valor"
         return 1
-    fi
+      fi
+      ;;
+    -r | --retry)
+      retry_mode=true
+      rsync_opts+=("--timeout=180" "--contimeout=60")
+      shift
+      ;;
+    *)
+      _error "Opción desconocida: $1"
+      _backup_usage
+      return 1
+      ;;
+    esac
+  done
 
-    local src="$1"
-    local dest="$2"
-    shift 2
-    local options=()
-    local bandwidth=""
-    local log_file=""
-    local dry_run=false
-    local delete=false
-    local verbose=false
-    local fast_mode=false
-    local checksum=false
-    local ignore_default=false
-    local smart_mode=false
-    local compress_mode=false
-    local retry_mode=false
+  [[ ! -e "$src" ]] && {
+    _error "Origen no encontrado: '$src'"
+    return 1
+  }
 
-    while [[ "$#" -gt 0 ]]; do
-        case "$1" in
-            -p|--preview)    dry_run=true; options+=("--dry-run"); shift ;;
-            -d|--delete)     delete=true;  options+=("--delete" "--delete-excluded"); shift ;;
-            -v|--verbose)    verbose=true; options+=("--verbose" "--info=progress2"); shift ;;
-            -f|--fast)       fast_mode=true; options+=("--whole-file"); shift ;;
-            -c|--checksum)   checksum=true; options+=("--checksum"); shift ;;
-            -i|--ignore)     ignore_default=true; shift ;;
-            -s|--smart)      smart_mode=true; shift ;;
-            -z|--zip)        compress_mode=true; options+=("--compress" "--compress-level=9"); shift ;;
-            -l|--log)        log_file="/tmp/backup-$(date +%Y%m%d-%H%M%S).log"; shift ;;
-            -b|--bandwidth)
-                shift
-                bandwidth="--bwlimit=$1"
-                options+=("$bandwidth")
-                ;;
-            -r|--retry)      retry_mode=true; options+=("--timeout=180" "--contimeout=60" "--retry-connrefused" "--retry=3"); shift ;;
-            *)
-                _error "Opción desconocida: $1"
-                _backup_usage
-                return 1
-                ;;
-        esac
-    done
+  # Detectar si es local
+  local is_local=false
+  if [[ "$dest" != *":"* && "$src" != *":"* ]]; then
+    is_local=true
+    [[ ! -d "$dest" ]] && { mkdir -p "$dest" || {
+      _error "No se pudo crear el destino: '$dest'"
+      return 1
+    }; }
+  fi
 
+  local base_opts=(
+    "--archive"
+    "--progress"
+    "--human-readable"
+    "--stats"
+    "--timeout=300"
+  )
 
-    if [[ ! -e "$src" ]]; then
-        _error "Origen no encontrado: '$src'"
-        return 1
-    fi
-
-    local is_local=false
-    if [[ "$dest" != *":"* && "$src" != *":"* ]]; then
-        is_local=true
-        if [[ ! -d "$dest" ]]; then
-            mkdir -p "$dest" || { _error "No se pudo crear el destino: '$dest'"; return 1; }
-        fi
-    fi
-
-
-    local rsync_opts=(
-        "--archive"
-        "--progress"
-        "--human-readable"
-        "--stats"
-        "--timeout=300" # Timeout 5 minutos
+  # Configuración inteligente
+  if $smart_mode; then
+    base_opts+=(
+      "--compress"
+      "--compress-level=6"
+      "--partial"
+      "--partial-dir=.rsync-partial"
     )
+    ignore_default=true
+  elif ! $is_local && ! $fast_mode && ! $compress_mode; then
+    base_opts+=("--compress" "--compress-level=6")
+  fi
 
+  # Exclusiones por defecto
+  if $ignore_default; then
+    base_opts+=(
+      "--exclude=.git/"
+      "--exclude=.cache/"
+      "--exclude=node_modules/"
+      "--exclude=*.tmp"
+      "--exclude=*.temp"
+      "--exclude=*.swp"
+      "--exclude=*~"
+      "--exclude=.DS_Store"
+      "--exclude=Thumbs.db"
+    )
+  fi
 
-    if $smart_mode; then
-        rsync_opts+=(
-            "--compress"
-            "--compress-level=6"
-            "--partial"
-            "--partial-dir=.rsync-partial"
-        )
-        ignore_default=true # Smart mode implies ignore default
-    elif ! $is_local && ! $fast_mode && ! $compress_mode; then
-        rsync_opts+=("--compress" "--compress-level=6") # Compresión moderada por defecto en remoto/no-fast
-    fi
+  local final_opts=("${base_opts[@]}" "${rsync_opts[@]}")
 
+  # Mostrar información
+  _info "Iniciando backup..."
+  _info "  Origen: ${_Y}$src${_N}"
+  _info "  Destino: ${_Y}$dest${_N}"
+  [[ -n "$bandwidth" ]] && _info "  Ancho de banda limitado: ${_Y}$bandwidth${_N}"
+  $dry_run && _info "  ${_Y}PREVIEW MODE ACTIVADO${_N}"
+  $delete && _warn "  Opción ${_Y}--delete${_N} ACTIVADA. ¡Archivos en destino podrían ser eliminados!"
+  $retry_mode && _info "  Reintentos automáticos activados."
+  [[ -n "$log_file" ]] && _info "  Guardando log en: ${_Y}$log_file${_N}"
 
-    if $ignore_default; then
-        rsync_opts+=(
-            "--exclude='.git/*'"
-            "--exclude='.cache/*'"
-            "--exclude='node_modules/*'"
-            "--exclude='*.tmp'"
-            "--exclude='*.temp'"
-            "--exclude='*.swp'"
-            "--exclude='*~'"
-            "--exclude='.DS_Store'"
-            "--exclude='Thumbs.db'"
-        )
-    fi
+  # Ejecutar rsync
+  local status
+  if [[ -n "$log_file" ]]; then
+    rsync "${final_opts[@]}" "$src" "$dest" 2>&1 | tee "$log_file"
+    status=${PIPESTATUS[0]}
+  else
+    rsync "${final_opts[@]}" "$src" "$dest"
+    status=$?
+  fi
 
-
-    rsync_opts+=("${options[@]}")
-
-    local rsync_cmd="rsync \"$src\" \"$dest\" ${rsync_opts[*]}"
-
-    _info "Iniciando backup..."
-    _info "  Origen: ${_Y}$src${_N}"
-    _info "  Destino: ${_Y}$dest${_N}"
-    if [[ -n "$bandwidth" ]]; then _info "  Ancho de banda limitado: ${_Y}$bandwidth${_N}"; fi
-    if $dry_run; then _info "  ${_Y}PREVIEW MODE ACTIVADO${_N}"; fi
-    if $delete; then _warn "  Opción ${_Y}--delete${_N} ACTIVADA. ¡Archivos en destino podrían ser eliminados!"; fi
-    if $retry_mode; then _info "  Reintentos automáticos activados."; fi
-    if [[ -n "$log_file" ]]; then _info "  Guardando log en: ${_Y}$log_file${_N}"; fi
-
-
-    if [[ -n "$log_file" ]]; then
-        eval "$rsync_cmd" 2>&1 | tee "$log_file"
-        local status=${PIPESTATUS[0]}
-    else
-        eval "$rsync_cmd"
-        local status=$?
-    fi
-
-
-    if [[ $status -eq 0 ]]; then
-        _success "Backup completado exitosamente."
-        [[ -n "$log_file" ]] && _info "Log guardado en: ${_Y}$log_file${_N}"
-    else
-        _error "Error durante el backup (código: $status)."
-        [[ -n "$log_file" ]] && _info "Revisa el log para más detalles: ${_Y}$log_file${_N}"
-    fi
-    return $status
+  if [[ $status -eq 0 ]]; then
+    _success "Backup completado exitosamente."
+    [[ -n "$log_file" ]] && _info "Log guardado en: ${_Y}$log_file${_N}"
+  else
+    _error "Error durante el backup (código: $status)."
+    [[ -n "$log_file" ]] && _info "Revisa el log para más detalles: ${_Y}$log_file${_N}"
+  fi
+  return "$status"
 }
 
-
-# Funciones de copia rápida
+# Atajos de backup
 qcopy() { backup "$1" "$2" --fast --smart; }
-# Función de sincronización segura
 safesync() { backup "$1" "$2" --checksum --smart --retry; }
-# Función de previsualización de sincronización
 preview_sync() { backup "$1" "$2" --preview --verbose; }
-# Función de copia con log
 logcopy() { backup "$1" "$2" --smart --log; }
-# Función de copia lenta/limitada
 slowcopy() { backup "$1" "$2" --bandwidth 1M --smart; }
 
+# ==============================================================================
+# Utilidades varias
+# ==============================================================================
+
+# Información de ventana X11
 get_window_info() {
-    echo "Haz clic en la ventana..."
-    xprop | awk '
+  echo "Haz clic en la ventana..."
+  xprop 2>/dev/null | awk '
     /^WM_CLASS/ {
-        sub(/.* =/, "instance: ");
-        sub(/,/, "\nclass: ");
-        print $0
+      sub(/.* =/, "instance: ");
+      sub(/,/, "\nclass: ");
+      print $0
     }
     /^WM_NAME/ {
-        sub(/.* =/, "title: ");
-        print $0
+      sub(/.* =/, "title: ");
+      print $0
     }
     /_NET_WM_WINDOW_TYPE\(ATOM\)/ {
-        gsub(/.*\//, "type: ", $2);
-        print $2
+      gsub(/.*\//, "type: ", $2);
+      print $2
     }
     /WM_WINDOW_ROLE\(STRING\)/ {
-        sub(/.* =/, "role: ");
-        print $0
-    }'
+      sub(/.* =/, "role: ");
+      print $0
+    }
+  '
 }
 
+# Archivos modificados recientemente
 lastmodified() {
-    local n=${1:-10}
-    find . -type f -printf '%T@ %p\n' | sort -n | tail -n "$n" | awk '{gsub(/^[0-9]+\.[0-9]+\s+/, ""); print}'
+  local n=${1:-10}
+  find . -type f -printf '%T+ %p\n' 2>/dev/null | sort -r | head -n "$n" | awk '{
+    date=$1;
+    sub(/\.[0-9]+$/, "", date);
+    $1="";
+    printf "%-20s %s\n", date, $0
+  }'
 }
 
+# Directorio temporal
 mt() {
-    local d
-    d=$(mktemp -d "/tmp/p$$.XXXXXX")
-    if [[ -d "$d" ]]; then
-        trap "rm -rf '$d'" EXIT
-        cd "$d" || return 1        
-    else
-        echo "[x] Error: No se pudo crear el directorio temporal" >&2
-        return 1
-    fi
+  local d
+  d=$(mktemp -d "/tmp/tmp.$$.XXXXXX") || return 1
+  [[ -d "$d" ]] && { builtin cd "$d" || return 1; }
 }
 
+# Crear y entrar a directorio
 mcd() {
-    mkdir -p "$1" && cd "$1"
+  [[ -z "$1" ]] && {
+    echo "Uso: mcd <directorio>"
+    return 1
+  }
+  mkdir -p "$1" && { cd "$1" || return 1; }
 }
 
+# Extraer campo específico
 field() {
-    local field_num=${1:-1}
-    local separator=${2:- }
-    awk -F "$separator" "{print \$$field_num}"
+  local field_num=${1:-1}
+  local separator=${2:- }
+  awk -F "$separator" "{print \$$field_num}"
 }
 
-total() {
-    awk '{sum += $1} END {print sum}'
-}
+# Sumar columna
+total() { awk '{sum += $1} END {print sum}'; }
 
+# Clima
 wttr() {
-    local req="wttr.in/${1:-}"
-    [[ $(tput cols) -lt 125 ]] && req+="?n"
-    curl -H "Accept-Language: ${LANG%_*}" --compressed "$req"
+  local location="${1:-}"
+  local req="wttr.in/${location}"
+  [[ $(tput cols) -lt 125 ]] && req+="?n"
+  curl -H "Accept-Language: ${LANG%_*}" --compressed "$req" 2>/dev/null
 }
 
-ports() {
-    sudo ss -tulpn | grep LISTEN
+# Puertos en escucha
+ports() { sudo ss -tulpn | grep LISTEN; }
+
+# Abrir gestor de archivos
+fm() {
+  local target_dir="${1:-.}"
+  nohup thunar "$target_dir" >/dev/null 2>&1 &
+  disown
 }
+
+# Login Cloudflare
+cf-login() {
+  local token
+  token=$(pass cloudflare/api_token 2>/dev/null)
+  if [[ -n "$token" ]]; then
+    export CLOUDFLARE_API_TOKEN="$token"
+    _success "Cloudflare Token cargado y listo."
+  else
+    _error "No se pudo obtener el token de Cloudflare"
+    return 1
+  fi
+}
+
+# Historial inteligente
+h() {
+  if [[ -z "$1" ]]; then
+    history | tail -20
+  else
+    history | grep -i --color=auto "$1"
+  fi
+}
+
+# Backup con timestamp
+bak() {
+  [[ -z "$1" ]] && {
+    echo "Uso: bak <archivo/directorio>"
+    return 1
+  }
+  [[ ! -e "$1" ]] && {
+    _error "No existe: $1"
+    return 1
+  }
+
+  local backup_name
+  backup_name="${1}.bak.$(date +%Y%m%d_%H%M%S)"
+  cp -r "$1" "$backup_name" && _success "Backup creado: $backup_name"
+}
+
 # vim:ft=sh
