@@ -1,8 +1,8 @@
-# Modern style Dunst Configuration
 [global]
     ### Display ###
     monitor = 0
     follow = mouse
+    enable_posix_regex = true
 
     ### Geometry ###
     width = (320, 400)
@@ -14,26 +14,25 @@
 
     ### Progress bar ###
     progress_bar = true
-    progress_bar_height = 8
-    progress_bar_frame_width = 0
+    progress_bar_height = 6
+    progress_bar_frame_width = 1
     progress_bar_min_width = 150
     progress_bar_max_width = 350
-    progress_bar_corner_radius = 4
+    progress_bar_corner_radius = 3
     progress_bar_corners = all
 
     ### Style ###
-    corner_radius = 12
+    corner_radius = 10
     corners = all
-    frame_width = 0
-    frame_color = "#00000000"
+    frame_width = 2
+    frame_color = "#313244"
     gap_size = 8
-    separator_height = 0
-    separator_color = "auto"
+    separator_color = "frame"
     background = "#1e1e2eE6"
-    transparency = 0
-    padding = 16
-    horizontal_padding = 16
-    text_icon_padding = 16
+    foreground = "#CDD6F4"
+    padding = 10
+    horizontal_padding = 15
+    text_icon_padding = 12
 
     ### Icons ###
     icon_corner_radius = 8
@@ -41,33 +40,32 @@
     enable_recursive_icon_lookup = true
     icon_theme = "Papirus"
     icon_position = left
-    min_icon_size = 48
-    max_icon_size = 64
+    min_icon_size = 42
+    max_icon_size = 56
 
     ### Text ###
-    font = "Inter, Cantarell, SF Pro Display 11"
-    line_height = 4
+    font = Inter 10
+    line_height = 5
     markup = full
-    format = "<b>%s</b>\n<span size='small' alpha='75%%'>%b</span>"
+    format = "<b>%s</b>\n<span size='small' alpha='80%%'>%b</span>"
     alignment = left
     vertical_alignment = center
     ellipsize = end
     ignore_newline = no
-    stack_duplicates = true
+    stack_duplicates = false
     hide_duplicate_count = true
     show_indicators = false
-    show_age_threshold = -1
 
     ### Behavior ###
     sort = update
     indicate_hidden = yes
     sticky_history = yes
-    history_length = 50
-    idle_threshold = 120
+    history_length = 20
+    idle_threshold = 0
 
     ### Interaction ###
     mouse_left_click = close_current
-    mouse_middle_click = do_action, close_current
+    mouse_middle_click = do_action, remove_current  
     mouse_right_click = context_all
 
     ### Applications ###
@@ -78,84 +76,61 @@
     ### Window ###
     title = "Notifications"
     class = "Dunst"
-
-    ### Wayland/X11 ###
     force_xwayland = false
-    ignore_dbusclose = false
-
-[experimental]
-    per_monitor_dpi = false
-
-### Urgency Styles ###
+    force_xinerama = false
 
 [urgency_low]
-    background  = "#1E1E2Ee6"
-    foreground  = "#CDD6F4"
-    highlight   = "#89B4FA"
-    timeout     = 8
+    background = "#1E1E2Ee6"
+    foreground = "#CDD6F4"
+    highlight = "#89B4FA"
     frame_color = "#313244"
+    timeout = 5
 
 [urgency_normal]
     background = "#1E1E2Ee6"
     foreground = "#CDD6F4"
     highlight = "#89B4FA"
+    frame_color = "#89B4FA"
     timeout = 10
-    override_pause_level = 30
-    frame_color = "#313244"
 
 [urgency_critical]
     background = "#1E1E2Ee6"
     foreground = "#F38BA8"
     highlight = "#F38BA8"
-    timeout = 30
-    override_pause_level = 60
     frame_color = "#F38BA8"
-
+    timeout = 0           
 ### Custom Rules ###
-
-# Volume notifications
 [volume]
-    appname = "*volume*"
+    appname = ".*volume.*"        
     set_stack_tag = "volume"
     timeout = 2
 
-# Brightness notifications
 [brightness]
-    appname = "*brightness*"
+    appname = ".*brightness.*" 
     set_stack_tag = "brightness"
     timeout = 2
 
-# Music/Media
 [music]
-    appname = "(Spotify|playerctl)"
+    appname = "(Spotify|playerctl|Chromium)"  
+    set_stack_tag = "music"
     timeout = 5
 
-# System updates
 [updates]
     appname = "pacman"
     urgency = normal
     timeout = 15
+    set_stack_tag = "updates"
 
-# Low battery
-[battery_low]
-    appname = "*battery*"
-    body = "*low*"
-    urgency = critical
-    timeout = 30
-
-# Email
-[email]
-    appname = "thunderbird"
-    urgency = normal
-    timeout = 12
-
-# Messaging apps
 [messaging]
-    appname = "(telegram|discord)"
+    appname = "(telegram|discord|Session)"
     urgency = normal
     timeout = 8
+    set_stack_tag = "messaging"
 
-# Hide spam notifications
-[ignore_spam]
-    body = "*has (joined|left)*"
-    skip_display = true
+[scylla_meltdown]
+    summary = ".*CORE: MELTDOWN.*"
+    background = "#020E0E"
+    foreground = "#FB3640"
+    frame_color = "#FB3640"
+    timeout = 0
+    set_stack_tag = "thermal_emergency"
