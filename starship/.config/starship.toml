@@ -84,11 +84,7 @@ ssh_only = true
 style = 'fg:pink'
 format = '[󰒋 $hostname]($style) '
 
-# ░░░ CONTAINER
-[container]
-format = '[📦 $name]($style) '
-style = 'fg:orange'
-only_with_env = true
+
 
 # ░░░ DURACIÓN
 [cmd_duration]
@@ -96,13 +92,6 @@ min_time = 300
 style = 'fg:gray'
 format = '⏱ [$duration]($style) '
 
-# ░░░ BATERÍA
-[battery]
-full_symbol = '🔋'
-charging_symbol = '⚡'
-discharging_symbol = '🔌'
-format = '[$symbol$percentage]($style) '
-style = 'fg:yellow'
 
 # ░░░ HORA
 [time]
@@ -115,7 +104,7 @@ format = ' [$time]($style) '
 [character]
 success_symbol = '[❯](bold fg:green)'
 error_symbol = '[❯](bold fg:red)'
-vicmd_symbol = '[❮](bold fg:blue)'
+
 
 [palettes.onedark]
 fg         = '#abb2bf'
