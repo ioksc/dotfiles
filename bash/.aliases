@@ -1,6 +1,9 @@
-# +---------------------------------+
-# |  >_  Dotfiles - ioksc  >_       |
-# +---------------------------------+
+
+# =============
+# GRC (Generic Colouriser)
+# =============
+GRC_ALIASES=true
+[[ -s "/etc/profile.d/grc.sh" ]] && source /etc/profile.d/grc.sh
 
 # =============
 # EDITORES
@@ -12,10 +15,19 @@ alias vi='vim'
 # REFLECTOR / MIRRORS
 # =============
 _mirror() {
-    local sort="$1" desc="$2" country="${3:-}"
-    local cmd="sudo reflector --protocol https --latest 30 --sort $sort"
-    [[ -n "$country" ]] && cmd+=" --country '$country'"
-    eval "$cmd --save /etc/pacman.d/mirrorlist" && echo "✅ $desc"
+  local sort="$1"
+  local desc="$2"
+  local country="${3:-}"
+  local cmd_args=(
+    "--protocol" "https"
+    "--latest" "30"
+    "--sort" "$sort"
+  )
+
+  [[ -n "$country" ]] && cmd_args+=("--country" "$country")
+  cmd_args+=("--save" "/etc/pacman.d/mirrorlist")
+
+  sudo reflector "${cmd_args[@]}" && echo "✅ $desc"
 }
 
 alias mirror_speed='_mirror rate "Mirrors optimizados por velocidad"'
@@ -26,17 +38,17 @@ alias mirror_score='_mirror score "Mirrors optimizados por puntuación"'
 # ARCHIVOS Y DIRECTORIOS
 # =============
 if command -v eza &>/dev/null; then
-    alias ls='eza --icons --group-directories-first --color=auto'
-    alias ll='eza -alF --icons --group-directories-first --color=auto'
-    alias lt='eza -aT --icons --level=2 --color=auto'
-    alias la='eza -a --icons --color=auto'
-    alias lss='eza -alF --sort=size --icons --group-directories-first --color=auto'
-    alias lst='eza -alF --sort=modified --icons --group-directories-first --color=auto'
+  alias ls='eza --icons --group-directories-first --color=auto'
+  alias ll='eza -alF --icons --group-directories-first --color=auto'
+  alias lt='eza -aT --icons --level=2 --color=auto'
+  alias la='eza -a --icons --color=auto'
+  alias lss='eza -alF --sort=size --icons --group-directories-first --color=auto'
+  alias lst='eza -alF --sort=modified --icons --group-directories-first --color=auto'
 else
-    alias ls='ls --color=auto --group-directories-first'
-    alias ll='ls -alF --color=auto --group-directories-first'
-    alias la='ls -A --color=auto'
-    alias l='ls -CF --color=auto'
+  alias ls='ls --color=auto --group-directories-first'
+  alias ll='ls -alF --color=auto --group-directories-first'
+  alias la='ls -A --color=auto'
+  alias l='ls -CF --color=auto'
 fi
 
 alias grep='grep --color=auto'
@@ -51,14 +63,28 @@ alias jctl='journalctl -p 3 -xb -n 25'
 alias jctll='journalctl -xb -f'
 alias jctlt='journalctl -xb -p 3 --since=today'
 alias grub-update='sudo grub-mkconfig -o /boot/grub/grub.cfg'
-# alias reload='exec $SHELL -l'
+
+# Recargar shell (mejorado con manejo de errores)
 reload() {
-    source ~/.bashrc
-    if command -v starship >/dev/null 2>&1; then
+  local shell_name="${SHELL##*/}"
+  case "$shell_name" in
+  bash)
+    if [[ -f ~/.bashrc ]]; then
+      source ~/.bashrc
+      if command -v starship >/dev/null 2>&1; then
         eval "$(starship init bash)"
-        PS1="$(starship prompt)"
+      fi
+      clear
+      echo "✅ Bash recargado exitosamente"
+    else
+      echo "❌ Error: ~/.bashrc no encontrado" >&2
+      return 1
     fi
-    clear
+    ;;
+  *)
+    exec "$SHELL" -l
+    ;;
+  esac
 }
 
 alias duf='duf -theme dark'
@@ -66,78 +92,175 @@ alias top='htop'
 alias cpu='htop -s PERCENT_CPU'
 alias mem='htop -s PERCENT_MEM'
 
+# Procesos que más consumen
+alias psmem='ps auxf | sort -nr -k 4 | head -10'
+alias pscpu='ps auxf | sort -nr -k 3 | head -10'
+
 # =============
 # SEGURIDAD
 # =============
-alias rm='rm -i'
-alias mv='mv -i'
-alias cp='cp -i'
+alias cp='command cp -i'
+alias mv='command mv -i'
+alias rm='command rm -i'
 alias chmod='chmod --verbose'
 alias chown='chown --verbose'
+
+panic() {
+  gpgconf --kill gpg-agent 2>/dev/null
+
+  # Sobrescribir antes de unset
+  if [[ -n "$CLOUDFLARE_API_TOKEN" ]]; then
+    CLOUDFLARE_API_TOKEN="$(head -c 32 /dev/urandom | base64)"
+  fi
+  if [[ -n "$GPG_TTY" ]]; then
+    GPG_TTY="$(head -c 32 /dev/urandom | base64)"
+  fi
+
+  unset CLOUDFLARE_API_TOKEN GPG_TTY
+  history -d $((HISTCMD - 1)) 2>/dev/null
+
+  echo "🔒 Variables sensibles sobrescritas y eliminadas"
+}
 
 # =============
 # GIT
 # =============
 if command -v git &>/dev/null; then
-    alias gs='git status'
-    alias ga='git add'
-    alias gaa='git add --all'
-    alias gc='git commit -m'
-    alias gca='git commit --amend'
-    alias gp='git push'
-    alias gpf='git push --force-with-lease'
-    alias glc='git log --graph --abbrev-commit --oneline --decorate --all --color=always'
-    alias gll='git log --pretty=format:"%C(yellow)%h%Cred%d %Creset%s%Cblue [%cn]" --decorate'
-    alias gd='git diff'
-    alias gds='git diff --staged'
-    alias gb='git branch'
-    alias gba='git branch -a'
-    alias gco='git checkout'
-    alias gcb='git checkout -b'
-    alias gm='git merge'
-    alias gr='git rebase'
-    alias gpl='git pull'
-    alias gplr='git pull --rebase'
-    alias gcl='git clone'
-    alias grs='git reset --soft HEAD^'
-    alias grh='git reset --hard'
-    alias gst='git stash'
-    alias gstp='git stash pop'
-    alias gstl='git stash list'
+  alias gs='git status'
+  alias ga='git add'
+  alias gaa='git add --all'
+  alias gc='git commit -m'
+  alias gca='git commit --amend'
+  alias glc='git log --graph --abbrev-commit --oneline --decorate --all --color=always'
+  alias gll='git log --pretty=format:"%C(yellow)%h%Cred%d %Creset%s%Cblue [%cn]" --decorate'
+  alias gd='git diff'
+  alias gds='git diff --staged'
+  alias gb='git branch'
+  alias gba='git branch -a'
+  alias gco='git checkout'
+  alias gcb='git checkout -b'
+  alias gm='git merge'
+  alias gr='git rebase'
+  alias gpl='git pull'
+  alias gplr='git pull --rebase'
+  alias gcl='git clone'
+  alias grs='git reset --soft HEAD^'
+  alias grh='git reset --hard'
+  alias gst='git stash'
+  alias gstp='git stash pop'
+  alias gstl='git stash list'
 
-    gbyauth() {
-        git log --pretty=format:"%h %ad | %s%d [%an]" --date=short --author="$1"
+  # Git push(más seguro)
+  gp() {
+    local remote
+    remote=$(git remote -v 2>/dev/null | head -n1 | awk '{print $2}')
+    if [[ -z "$remote" ]]; then
+      echo "❌ No hay repositorio remoto configurado"
+      return 1
+    fi
+
+    echo "🚀 ¿Push a $remote? [y/N]"
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+      git push "$@"
+    else
+      echo "❌ Push cancelado"
+    fi
+  }
+
+  # Git push forzado con confirmación extra
+  gpf() {
+    echo "⚠️  PUSH FORZADO. ¿Estás SEGURO? [yes/NO]"
+    read -r response
+    if [[ "$response" == "yes" ]]; then
+      git push --force-with-lease "$@"
+    else
+      echo "❌ Push forzado cancelado"
+    fi
+  }
+
+  # Git log filtrado por autor
+  gbyauth() {
+    [[ -z "$1" ]] && {
+      echo "Uso: gbyauth <autor>"
+      return 1
     }
+    git log --pretty=format:"%h %ad | %s%d [%an]" --date=short --author="$1"
+  }
 
-    alias gbclean='git branch --merged | egrep -v "(^\*|master|main|dev)" | xargs -r git branch -d'
+  # Limpiar ramas mergeadas
+  gbclean() {
+    local branches
+    branches=$(git branch --merged | grep -Ev "(^\*|master|main|dev|develop)")
+    if [[ -n "$branches" ]]; then
+      echo "Ramas a eliminar:"
+      echo "$branches"
+      echo ""
+      echo "¿Eliminar estas ramas? [y/N]"
+      read -r response
+      if [[ "$response" =~ ^[Yy]$ ]]; then
+        echo "$branches" | xargs -r git branch -d
+        echo "✅ Ramas eliminadas"
+      else
+        echo "❌ Cancelado"
+      fi
+    else
+      echo "ℹ️  No hay ramas mergeadas para limpiar"
+    fi
+  }
 fi
 
 # =============
 # DOCKER
 # =============
 if command -v docker &>/dev/null; then
-    alias dps='docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"'
-    alias dpsa='docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"'
-    alias dstop='docker stop $(docker ps -q)'
-    alias drm='docker rm $(docker ps -aq)'
-    alias dpull='docker pull'
-    alias dlogs='docker logs -f'
-    alias dins='docker inspect'
-    alias dexec='docker exec -it'
-    alias dprune='docker system prune -a --volumes'
-    alias dstats='docker stats'
+  alias dps='docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"'
+  alias dpsa='docker ps -a --format "table {{.ID}}\t{{.Names}}\t{{.Status}}\t{{.Ports}}"'
+  alias dstop='docker stop $(docker ps -q)'
+  alias drm='docker rm $(docker ps -aq)'
+  alias dpull='docker pull'
+  alias dlogs='docker logs -f'
+  alias dins='docker inspect'
+  alias dexec='docker exec -it'
+  alias dstats='docker stats'
+
+  dprune() {
+    echo "⚠️  ADVERTENCIA: Esto eliminará:"
+    echo "  - Todos los contenedores detenidos"
+    echo "  - Todas las redes no utilizadas"
+    echo "  - Todas las imágenes sin usar"
+    echo "  - Todos los volúmenes sin usar"
+    echo "  - Todo el caché de build"
+    echo ""
+    echo "¿Continuar con la limpieza? Escribe 'yes' para confirmar:"
+    read -r response
+    if [[ "$response" == "yes" ]]; then
+      docker system prune -a --volumes
+    else
+      echo "❌ Limpieza cancelada"
+    fi
+  }
 fi
 
 # =============
-# OTROS ALIAS Y FUNCIONES
+# RIPGREP (rg)
 # =============
 if command -v rg &>/dev/null; then
-    alias hl="rg --passthru"
-    alias rgs="rg -i -g '!.git/' --hidden"
+  alias hl="rg --passthru"
+  alias rgs="rg -i -g '!.git/' --hidden"
 fi
 
-alias burpsuite="/home/ioksc/burp-launcher.sh &>/dev/null &"
+# =============
+# APLICACIONES Y HERRAMIENTAS
+# =============
 alias random="wal -i ~/Wallpapers/ &>/dev/null && clear && fastfetch --config examples/14"
 
+# =============
+# CONTROL DE CPU/TEMPERATURA
+# =============
+alias modo-fresco='sudo cpupower frequency-set -g powersave && echo "❄️  Modo ahorro activo: 1.60 GHz max"'
+alias modo-auto='sudo cpupower frequency-set -g schedutil && echo "⚡ Modo inteligente activo: Schedutil"'
+alias modo-turbo='sudo cpupower frequency-set -g performance && echo "🚀 Modo máximo rendimiento: 3.80 GHz"'
+alias cpu-temp='watch -n 1 "cpupower frequency-info | grep \"current CPU frequency\"; sensors | grep \"Core\""'
 
 # vim:ft=sh
