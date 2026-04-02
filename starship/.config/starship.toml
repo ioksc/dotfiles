@@ -21,12 +21,12 @@ truncation_length = 3
 truncation_symbol = '…/'
 
 [directory.substitutions]
-'Documents'  = '󰈙 '
+'Documentos'  = '󰈙 '
 'Downloads'  = ' '
 'Descargas'  = ' '
 'Music'      = ' '
 'Pictures'   = ' '
-'Workspace'  = ' '
+'Workspace'  = ' '
 
 # ░░░ GIT
 [git_branch]
@@ -78,7 +78,7 @@ disabled = true
 style = 'fg:purple'
 format = '[  $indicator]($style) '
 
-# ░░░ HOSTNAME (útil para SSH o WSL)
+# ░░░ HOSTNAME
 [hostname]
 ssh_only = true
 style = 'fg:pink'
