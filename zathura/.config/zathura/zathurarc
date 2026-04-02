@@ -5,14 +5,12 @@
 # === GENERAL SETTINGS ===
 set statusbar-h-padding 0
 set statusbar-v-padding 0
-set page-padding 2
 set adjust-open "fit-page"
 set pages-per-row 1
 set scroll-page-aware true
 set scroll-full-overlap 0.01
 set scroll-step 50
 set incremental-search true
-set index-on-open true
 
 # === WINDOW SETTINGS ===
 set window-title-home-tilde true
